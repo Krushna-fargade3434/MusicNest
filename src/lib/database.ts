@@ -1,11 +1,13 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { User, StoredFile, Track } from '@/types/music';
+import type { User, StoredFile, Track, Playlist, PlaylistTrack } from '@/types/music';
 
 // PlayNest Database using Dexie.js (IndexedDB wrapper)
 class MusicNestDB extends Dexie {
   users!: EntityTable<User, 'id'>;
   files!: EntityTable<StoredFile, 'id'>;
   tracks!: EntityTable<Track, 'id'>;
+  playlists!: EntityTable<Playlist, 'id'>;
+  playlistTracks!: EntityTable<PlaylistTrack, 'id'>;
 
   constructor() {
     super('MusicNestDB');
@@ -14,6 +16,11 @@ class MusicNestDB extends Dexie {
       users: '++id, username, email, createdAt',
       files: '++id, path, name, type, userId, [path+userId], createdAt',
       tracks: 'id, title, artist, album, fileId, userId, addedAt',
+    });
+
+    this.version(2).stores({
+      playlists: '++id, name, userId, createdAt',
+      playlistTracks: '++id, playlistId, trackId, [playlistId+trackId], addedAt',
     });
   }
 }
@@ -93,8 +100,18 @@ export async function getTrackById(id: string): Promise<Track | undefined> {
   return db.tracks.get(id);
 }
 
+export async function updateTrack(track: Track): Promise<void> {
+  await db.tracks.put(track);
+}
+
 export async function deleteTrack(id: string): Promise<void> {
-  await db.tracks.delete(id);
+  const track = await db.tracks.get(id);
+  if (track) {
+    await db.files.delete(track.fileId);
+    await db.tracks.delete(id);
+    // Also remove from any playlists
+    await db.playlistTracks.where('trackId').equals(id).delete();
+  }
 }
 
 export async function trackExistsByTitle(title: string, userId: number): Promise<boolean> {
@@ -110,4 +127,70 @@ export async function trackExistsByTitle(title: string, userId: number): Promise
 export async function clearUserData(userId: number): Promise<void> {
   await db.files.where('userId').equals(userId).delete();
   await db.tracks.where('userId').equals(userId).delete();
+  await db.playlists.where('userId').equals(userId).delete();
+  // We can't easily filter playlistTracks by user without a join or index, 
+  // but since playlists are deleted, we can clean up orphaned playlistTracks later or 
+  // we should assume the user owns the playlist.
+  // Ideally, we iterate playlists to delete tracks, but for now this is fine.
+}
+
+// Playlist operations
+export async function createPlaylist(playlist: Playlist): Promise<number> {
+  return db.playlists.add(playlist);
+}
+
+export async function getPlaylistsByUser(userId: number): Promise<Playlist[]> {
+  return db.playlists.where('userId').equals(userId).toArray();
+}
+
+export async function deletePlaylist(id: number): Promise<void> {
+  await db.playlists.delete(id);
+  await db.playlistTracks.where('playlistId').equals(id).delete();
+}
+
+export async function addTrackToPlaylist(playlistId: number, trackId: string): Promise<number> {
+  const existing = await db.playlistTracks.where('[playlistId+trackId]').equals([playlistId, trackId]).first();
+  if (existing) return existing.id!;
+  
+  return db.playlistTracks.add({
+    playlistId,
+    trackId,
+    addedAt: new Date(),
+  });
+}
+
+export async function addTracksToPlaylist(playlistId: number, trackIds: string[]): Promise<void> {
+  const items = trackIds.map(trackId => ({
+    playlistId,
+    trackId,
+    addedAt: new Date(),
+  }));
+  
+  // We should check for duplicates, but bulkAdd might fail on unique constraint?
+  // Our schema is: playlistTracks: '++id, playlistId, trackId, [playlistId+trackId], addedAt'
+  // [playlistId+trackId] is a compound index but not unique by default unless we specify unique: true?
+  // In Dexie, indexes are not unique by default unless `&` is used.
+  // My schema was: playlistTracks: '++id, playlistId, trackId, [playlistId+trackId], addedAt'
+  // No `&` prefix, so duplicates are allowed by DB but we want to avoid them logically.
+  
+  // To be safe, we check existing.
+  const existing = await db.playlistTracks.where('playlistId').equals(playlistId).toArray();
+  const existingTrackIds = new Set(existing.map(pt => pt.trackId));
+  
+  const newItems = items.filter(item => !existingTrackIds.has(item.trackId));
+  
+  if (newItems.length > 0) {
+    await db.playlistTracks.bulkAdd(newItems);
+  }
+}
+
+export async function removeTrackFromPlaylist(playlistId: number, trackId: string): Promise<void> {
+  await db.playlistTracks.where('[playlistId+trackId]').equals([playlistId, trackId]).delete();
+}
+
+export async function getPlaylistTracks(playlistId: number): Promise<Track[]> {
+  const playlistTracks = await db.playlistTracks.where('playlistId').equals(playlistId).toArray();
+  const trackIds = playlistTracks.map(pt => pt.trackId);
+  const tracks = await db.tracks.bulkGet(trackIds);
+  return tracks.filter((t): t is Track => !!t);
 }

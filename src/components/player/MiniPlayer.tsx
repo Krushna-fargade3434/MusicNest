@@ -87,9 +87,6 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps & { c
             <p className="font-medium text-sm truncate hover:underline">
               {currentTrack.title}
             </p>
-            <p className="text-xs text-muted-foreground truncate hover:underline">
-              {currentTrack.artist}
-            </p>
           </div>
         </div>
 

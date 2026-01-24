@@ -119,10 +119,6 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
                     <span>Add to Playlist</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="cursor-pointer focus:bg-white/10 focus:text-white">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>View Artist</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer focus:bg-white/10 focus:text-white">
                     <Share2 className="mr-2 h-4 w-4" />
                     <span>Share</span>
                   </DropdownMenuItem>
@@ -160,9 +156,6 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
                   <h2 className="text-2xl font-bold truncate mb-1">
                     {currentTrack?.title || 'No track selected'}
                   </h2>
-                  <p className="text-muted-foreground truncate">
-                    {currentTrack?.artist || 'Unknown Artist'}
-                  </p>
                 </div>
                 <button 
                   onClick={() => setIsLiked(!isLiked)}

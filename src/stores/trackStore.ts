@@ -8,6 +8,7 @@ interface TrackStore {
   addTrack: (track: Track) => void;
   addTracks: (tracks: Track[]) => void;
   removeTrack: (id: string) => void;
+  updateTrack: (track: Track) => void;
   clearTracks: () => void;
   getTrackById: (id: string) => Track | undefined;
 }
@@ -35,6 +36,10 @@ export const useTrackStore = create<TrackStore>()(
       
       removeTrack: (id) => set((state) => ({
         localTracks: state.localTracks.filter((t) => t.id !== id),
+      })),
+
+      updateTrack: (track) => set((state) => ({
+        localTracks: state.localTracks.map((t) => t.id === track.id ? track : t),
       })),
       
       clearTracks: () => set({ localTracks: [] }),

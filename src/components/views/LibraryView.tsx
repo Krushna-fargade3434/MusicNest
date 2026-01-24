@@ -1,10 +1,38 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Play, Pause, Music, Clock, MoreHorizontal, Heart } from 'lucide-react';
+import { Plus, Play, Pause, Music, Clock, MoreHorizontal, Heart, Pencil, Trash2 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useTrackStore } from '@/stores/trackStore';
 import { useLocalMusic } from '@/hooks/useLocalMusic';
+import { updateTrack as dbUpdateTrack, deleteTrack as dbDeleteTrack } from '@/lib/database';
 import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 function formatDuration(seconds: number): string {
   if (!seconds || isNaN(seconds)) return '0:00';
@@ -14,9 +42,48 @@ function formatDuration(seconds: number): string {
 }
 
 export function LibraryView() {
-  const { localTracks } = useTrackStore();
+  const { localTracks, updateTrack, removeTrack } = useTrackStore();
   const { openFilePicker, FileInput } = useLocalMusic();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayerStore();
+
+  const [renameDialogOpen, setRenameDialogOpen] = React.useState(false);
+  const [trackToRename, setTrackToRename] = React.useState<typeof localTracks[0] | null>(null);
+  const [newName, setNewName] = React.useState("");
+
+  const [deleteAlertOpen, setDeleteAlertOpen] = React.useState(false);
+  const [trackToDelete, setTrackToDelete] = React.useState<typeof localTracks[0] | null>(null);
+
+  const handleRename = async () => {
+    if (trackToRename && newName.trim()) {
+      const updatedTrack = { ...trackToRename, title: newName.trim() };
+      await dbUpdateTrack(updatedTrack);
+      updateTrack(updatedTrack);
+      setRenameDialogOpen(false);
+      setTrackToRename(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (trackToDelete) {
+      await dbDeleteTrack(trackToDelete.id);
+      removeTrack(trackToDelete.id);
+      setDeleteAlertOpen(false);
+      setTrackToDelete(null);
+    }
+  };
+
+  const openRenameDialog = (track: typeof localTracks[0], e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTrackToRename(track);
+    setNewName(track.title);
+    setRenameDialogOpen(true);
+  };
+
+  const openDeleteAlert = (track: typeof localTracks[0], e: React.MouseEvent) => {
+    e.stopPropagation();
+    setTrackToDelete(track);
+    setDeleteAlertOpen(true);
+  };
 
   const handlePlayTrack = (track: typeof localTracks[0]) => {
     if (currentTrack?.id === track.id) {
@@ -84,13 +151,13 @@ export function LibraryView() {
         {localTracks.length > 0 ? (
           <div className="bg-black/20 rounded-lg overflow-hidden">
             {/* Header Row */}
-            <div className="grid grid-cols-[16px_4fr_3fr_minmax(80px,1fr)] gap-4 px-4 py-3 border-b border-white/5 text-sm text-muted-foreground">
+            <div className="grid grid-cols-[16px_4fr_minmax(60px,80px)_40px] gap-4 px-4 py-3 border-b border-white/5 text-sm text-muted-foreground">
               <span className="text-center">#</span>
               <span>Title</span>
-              <span className="hidden md:block">Album</span>
               <span className="flex justify-end">
                 <Clock className="w-4 h-4" />
               </span>
+              <span></span>
             </div>
 
             {/* Track Rows */}
@@ -101,13 +168,13 @@ export function LibraryView() {
               return (
                 <motion.div
                   key={track.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.02 }}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
                   onClick={() => handlePlayTrack(track)}
                   className={cn(
-                    'group grid grid-cols-[16px_4fr_3fr_minmax(80px,1fr)] gap-4 px-4 py-2 items-center cursor-pointer transition-colors',
-                    isActive ? 'bg-white/10' : 'hover:bg-white/5'
+                    "grid grid-cols-[16px_4fr_minmax(60px,80px)_40px] gap-4 px-4 py-3 border-b border-white/5 items-center hover:bg-white/5 transition-colors cursor-pointer group",
+                    isActive && "bg-white/10"
                   )}
                 >
                   {/* Number / Play */}
@@ -153,26 +220,38 @@ export function LibraryView() {
                       <p className={cn('font-medium truncate', isActive && 'text-primary')}>
                         {track.title}
                       </p>
-                      <p className="text-sm text-muted-foreground truncate">{track.artist}</p>
                     </div>
                   </div>
 
-                  {/* Album */}
-                  <p className="hidden md:block text-sm text-muted-foreground truncate hover:underline cursor-pointer">
-                    {track.album}
-                  </p>
-
-                  {/* Duration & Actions */}
+                  {/* Duration */}
                   <div className="flex items-center justify-end gap-3">
-                    <button className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity">
-                      <Heart className="w-4 h-4" />
-                    </button>
                     <span className="text-sm text-muted-foreground tabular-nums">
                       {formatDuration(track.duration)}
                     </span>
-                    <button className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-opacity">
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
+                  </div>
+
+                  {/* Menu */}
+                  <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40 bg-popover/95 backdrop-blur-sm">
+                        <DropdownMenuItem onClick={(e) => openRenameDialog(track, e)}>
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={(e) => openDeleteAlert(track, e)}
+                          className="text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </motion.div>
               );
@@ -202,6 +281,51 @@ export function LibraryView() {
           </motion.div>
         )}
       </div>
+
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Track</DialogTitle>
+            <DialogDescription>
+              Enter a new title for this track.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Title
+              </Label>
+              <Input
+                id="name"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleRename}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteAlertOpen} onOpenChange={setDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the track from your library.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

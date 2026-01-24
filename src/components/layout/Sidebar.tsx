@@ -118,9 +118,6 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
                     </div>
                     <div className="flex-1 text-left min-w-0">
                       <p className="font-medium text-sm truncate">{track.title}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {track.artist}
-                      </p>
                     </div>
                   </button>
                 ))}

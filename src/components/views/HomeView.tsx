@@ -120,7 +120,6 @@ export function HomeView({ onNavigate }: HomeViewProps) {
                     </div>
                   </div>
                   <p className="font-semibold text-sm truncate mb-1">{track.title}</p>
-                  <p className="text-xs text-muted-foreground truncate">{track.artist}</p>
                 </motion.button>
               ))}
             </div>
@@ -155,11 +154,9 @@ export function HomeView({ onNavigate }: HomeViewProps) {
         {localTracks.length > 0 && (
           <section>
             <h2 className="text-xl font-bold mb-4">Your Stats</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {[
-                { label: 'Total Tracks', value: localTracks.length, icon: Music, color: 'from-violet-500 to-purple-600' },
-                { label: 'Artists', value: new Set(localTracks.map(t => t.artist)).size, icon: TrendingUp, color: 'from-pink-500 to-rose-600' },
-                { label: 'Albums', value: new Set(localTracks.map(t => t.album)).size, icon: Sparkles, color: 'from-orange-500 to-amber-600' },
+                { label: 'Songs', value: localTracks.length, icon: Music, color: 'from-indigo-500 to-purple-600' },
                 { label: 'Minutes', value: Math.round(localTracks.reduce((acc, t) => acc + t.duration, 0) / 60), icon: Clock, color: 'from-cyan-500 to-blue-600' },
               ].map((stat, index) => (
                 <motion.div
