@@ -16,9 +16,15 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: null, // We will register manually in main.tsx
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       devOptions: {
-        enabled: true
+        enabled: true,
+        type: 'module',
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        cleanupOutdatedCaches: true,
       },
       manifest: {
         name: 'MusicNest',
@@ -31,12 +37,12 @@ export default defineConfig(({ mode }) => ({
         start_url: '/',
         icons: [
           {
-            src: 'MUSIC-NEST-LOGO.png',
+            src: '/MUSIC-NEST-LOGO.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'MUSIC-NEST-LOGO.png',
+            src: '/MUSIC-NEST-LOGO.png',
             sizes: '512x512',
             type: 'image/png'
           }

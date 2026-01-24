@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Plus, Heart, Music, ArrowLeft, Trash2, Check, Search } from 'lucide-react';
 import { useTrackStore } from '@/stores/trackStore';
+import { useLocalMusic } from '@/hooks/useLocalMusic';
 import { usePlayerStore } from '@/stores/playerStore';
 import { usePlaylistStore } from '@/stores/playlistStore';
 import { useUserStore } from '@/stores/userStore';
@@ -47,6 +48,7 @@ type DisplayPlaylist = Playlist | SystemPlaylist;
 
 export function PlaylistView() {
   const { localTracks } = useTrackStore();
+  const { loadTracksFromDB } = useLocalMusic();
   const { playTrack, currentTrack, isPlaying, togglePlay } = usePlayerStore();
   const { 
     playlists, 
@@ -72,8 +74,9 @@ export function PlaylistView() {
   useEffect(() => {
     if (currentUser?.id) {
       loadPlaylists(currentUser.id);
+      loadTracksFromDB(); // Ensure tracks are synced with DB
     }
-  }, [currentUser, loadPlaylists]);
+  }, [currentUser, loadPlaylists, loadTracksFromDB]);
 
   useEffect(() => {
     if (view === 'detail' && selectedPlaylist?.id && typeof selectedPlaylist.id === 'number') {
@@ -106,7 +109,13 @@ export function PlaylistView() {
   const handleAddTracks = async () => {
     if (!selectedPlaylist?.id || typeof selectedPlaylist.id !== 'number') return;
     
+    console.log('Adding tracks:', selectedTracksToAdd, 'to playlist:', selectedPlaylist.id);
+    
+    // Attempt to add tracks
     await addTracksToPlaylist(selectedPlaylist.id, selectedTracksToAdd);
+    
+    // Force a library refresh to ensure we're not seeing stale tracks
+    loadTracksFromDB();
     
     setSelectedTracksToAdd([]);
     setIsAddTracksOpen(false);
@@ -118,6 +127,16 @@ export function PlaylistView() {
         ? prev.filter(id => id !== trackId)
         : [...prev, trackId]
     );
+  };
+
+  const handleSingleAdd = async (trackId: string) => {
+    if (!selectedPlaylist?.id || typeof selectedPlaylist.id !== 'number') return;
+    
+    // Add single track
+    await addTrackToPlaylist(selectedPlaylist.id, trackId);
+    
+    // Refresh to update UI state
+    loadTracksFromDB();
   };
 
   const filteredTracks = localTracks.filter(track => 
@@ -244,9 +263,24 @@ export function PlaylistView() {
                                   {track.title}
                                 </Label>
                               </div>
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-muted-foreground w-12 text-right">
                                 {Math.floor(track.duration / 60)}:{Math.floor(track.duration % 60).toString().padStart(2, '0')}
                               </span>
+                              <Button
+                                size="sm"
+                                variant={isAlreadyAdded ? "ghost" : "default"}
+                                className={cn(
+                                  "ml-2 h-8 w-8 p-0 rounded-full",
+                                  isAlreadyAdded && "text-green-500 hover:text-green-600"
+                                )}
+                                disabled={isAlreadyAdded}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSingleAdd(track.id);
+                                }}
+                              >
+                                {isAlreadyAdded ? <Check className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                              </Button>
                             </div>
                           );
                         })}

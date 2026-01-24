@@ -159,29 +159,44 @@ export async function addTrackToPlaylist(playlistId: number, trackId: string): P
   });
 }
 
-export async function addTracksToPlaylist(playlistId: number, trackIds: string[]): Promise<void> {
-  const items = trackIds.map(trackId => ({
-    playlistId,
-    trackId,
-    addedAt: new Date(),
-  }));
-  
-  // We should check for duplicates, but bulkAdd might fail on unique constraint?
-  // Our schema is: playlistTracks: '++id, playlistId, trackId, [playlistId+trackId], addedAt'
-  // [playlistId+trackId] is a compound index but not unique by default unless we specify unique: true?
-  // In Dexie, indexes are not unique by default unless `&` is used.
-  // My schema was: playlistTracks: '++id, playlistId, trackId, [playlistId+trackId], addedAt'
-  // No `&` prefix, so duplicates are allowed by DB but we want to avoid them logically.
-  
-  // To be safe, we check existing.
-  const existing = await db.playlistTracks.where('playlistId').equals(playlistId).toArray();
-  const existingTrackIds = new Set(existing.map(pt => pt.trackId));
-  
-  const newItems = items.filter(item => !existingTrackIds.has(item.trackId));
-  
-  if (newItems.length > 0) {
-    await db.playlistTracks.bulkAdd(newItems);
-  }
+export async function addTracksToPlaylist(playlistId: number, trackIds: string[]): Promise<number> {
+  return db.transaction('rw', db.playlistTracks, db.tracks, async () => {
+    // Coerce inputs
+    const safePlaylistId = Number(playlistId);
+    if (isNaN(safePlaylistId)) {
+      throw new Error(`Invalid playlist ID: ${playlistId}`);
+    }
+
+    // Verify tracks exist in DB first
+    const validTracks = await db.tracks.bulkGet(trackIds);
+    const validTrackIds = new Set(validTracks.filter(t => !!t).map(t => t!.id));
+    
+    if (validTrackIds.size === 0 && trackIds.length > 0) {
+      console.error('None of the provided tracks exist in the database');
+      return 0;
+    }
+
+    // Get existing tracks in this playlist
+    const existing = await db.playlistTracks.where('playlistId').equals(safePlaylistId).toArray();
+    const existingTrackIds = new Set(existing.map(pt => pt.trackId));
+    
+    // Filter out duplicates
+    const newItems = Array.from(validTrackIds)
+      .filter(trackId => !existingTrackIds.has(trackId))
+      .map(trackId => ({
+        playlistId: safePlaylistId,
+        trackId: String(trackId),
+        addedAt: new Date(),
+      }));
+    
+    console.log(`Adding ${newItems.length} new tracks to playlist ${safePlaylistId} (Transaction)`);
+
+    if (newItems.length > 0) {
+      await db.playlistTracks.bulkAdd(newItems);
+    }
+    
+    return newItems.length;
+  });
 }
 
 export async function removeTrackFromPlaylist(playlistId: number, trackId: string): Promise<void> {
@@ -192,5 +207,11 @@ export async function getPlaylistTracks(playlistId: number): Promise<Track[]> {
   const playlistTracks = await db.playlistTracks.where('playlistId').equals(playlistId).toArray();
   const trackIds = playlistTracks.map(pt => pt.trackId);
   const tracks = await db.tracks.bulkGet(trackIds);
-  return tracks.filter((t): t is Track => !!t);
+  const validTracks = tracks.filter((t): t is Track => !!t);
+  
+  if (validTracks.length !== trackIds.length) {
+    console.warn(`Playlist ${playlistId} has ${trackIds.length} tracks, but only ${validTracks.length} found in DB.`);
+  }
+  
+  return validTracks;
 }

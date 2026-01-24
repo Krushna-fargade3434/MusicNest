@@ -29,12 +29,21 @@ function getExtension(filename: string): string {
 }
 
 // Check if file is audio or video
-function getFileType(filename: string): 'audio' | 'video' | null {
+function getFileType(file: File): 'audio' | 'video' | null {
+  const filename = file.name;
+  const mimeType = file.type;
+  
+  // Check by MIME type first
+  if (mimeType.startsWith('audio/')) return 'audio';
+  if (mimeType.startsWith('video/')) return 'video';
+  
+  // Fallback to extension check
   const ext = getExtension(filename);
   if (AUDIO_EXTENSIONS.includes(ext)) return 'audio';
   if (VIDEO_EXTENSIONS.includes(ext)) return 'video';
   // Treat .mp5 as video (MP4 variant)
   if (ext === '.mp5') return 'video';
+  
   return null;
 }
 
@@ -144,20 +153,35 @@ export function useLocalMusic() {
     let added = 0;
 
     for (const file of fileArray) {
-      const fileType = getFileType(file.name);
+      const fileType = getFileType(file);
       if (!fileType) {
         skipped++;
         continue;
       }
 
       // Check for duplicates
+      // On mobile, sometimes file.name is just "audio.mp3" or similar generic names.
+      // We should rely more on the combination of size and name, or just size + partial name.
+      // For now, let's keep name check but be aware of it.
+      
       const exists = await fileExists(file.name, currentUser.id);
       const titleExists = await trackExistsByTitle(
         parseFilename(file.name).title,
         currentUser.id
       );
 
-      if (exists || titleExists) {
+      // Relax duplicate check: if title exists but file size is different, maybe it's a different version?
+      // But keeping it strict prevents clutter.
+      if (exists) {
+        skipped++;
+        continue;
+      }
+      
+      // Allow same title if filename is different (e.g. different format)
+      // But if titleExists is true, we might want to skip to avoid duplicates in UI.
+      // Let's stick to existing logic but maybe log why.
+      if (titleExists) {
+        console.log('Skipping duplicate title:', file.name);
         skipped++;
         continue;
       }

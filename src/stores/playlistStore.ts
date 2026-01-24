@@ -137,11 +137,24 @@ export const usePlaylistStore = create<PlaylistState>((set, get) => ({
 
   addTracksToPlaylist: async (playlistId: number, trackIds: string[]) => {
     try {
-      await addTracksToPlaylist(playlistId, trackIds);
+      console.log('Store: addTracksToPlaylist', playlistId, trackIds);
+      const count = await addTracksToPlaylist(playlistId, trackIds);
+      console.log('Store: added count', count);
+      
+      // Reload tracks immediately
       await get().loadPlaylistTracks(playlistId);
-      toast.success("Added tracks to playlist");
+      
+      if (count > 0) {
+        toast.success(`Added ${count} track${count !== 1 ? 's' : ''} to playlist`);
+      } else if (count === 0 && trackIds.length > 0) {
+        toast.warning("Tracks were not added. They may be duplicates or missing from the database.");
+      } else {
+         // Should not happen if UI is correct
+        toast.info("No tracks selected");
+      }
     } catch (error) {
-      toast.error("Failed to add tracks");
+      console.error('Store: failed to add tracks', error);
+      toast.error("Failed to add tracks: " + (error instanceof Error ? error.message : "Unknown error"));
     }
   },
 
