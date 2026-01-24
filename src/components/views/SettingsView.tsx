@@ -2,21 +2,24 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Volume2, 
-  Trash2, 
   Info, 
   Heart, 
-  Smartphone, 
   Moon, 
   Bell, 
   Shield, 
   Zap,
   ChevronRight,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Palette,
+  Layout,
+  Sun,
+  Monitor,
+  Check
 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/playerStore';
-import { useTrackStore } from '@/stores/trackStore';
 import { useUserStore } from '@/stores/userStore';
+import { useSettingsStore, Theme, AccentColor } from '@/stores/settingsStore';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -26,36 +29,19 @@ import { cn } from '@/lib/utils';
 export function SettingsView() {
   const { toast } = useToast();
   const { volume, setVolume } = usePlayerStore();
-  const { localTracks, clearTracks } = useTrackStore();
   const { currentUser, logout } = useUserStore();
+  const { 
+    theme, 
+    accentColor, 
+    isCompactMode, 
+    setTheme, 
+    setAccentColor, 
+    setCompactMode 
+  } = useSettingsStore();
 
   const [audioQuality, setAudioQuality] = useState('high');
   const [crossfade, setCrossfade] = useState(0);
-  const [notifications, setNotifications] = useState(true);
   const [dataSaver, setDataSaver] = useState(false);
-
-  const handleClearLibrary = () => {
-    if (confirm('Are you sure you want to clear all tracks from your library? This action cannot be undone.')) {
-      clearTracks();
-      toast({
-        title: 'Library cleared',
-        description: 'All tracks have been removed from your library.',
-      });
-    }
-  };
-
-  const handleClearCache = () => {
-    toast({
-      title: 'Cache cleared',
-      description: 'Freeing up space...',
-    });
-    setTimeout(() => {
-      toast({
-        title: 'Success',
-        description: '245 MB freed',
-      });
-    }, 1000);
-  };
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to log out?')) {
@@ -84,7 +70,7 @@ export function SettingsView() {
   );
 
   const SettingRow = ({ label, description, children }: { label: string, description?: string, children: React.ReactNode }) => (
-    <div className="flex items-center justify-between py-1">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between py-2 gap-4 sm:gap-0">
       <div className="flex-1 pr-4">
         <p className="font-medium">{label}</p>
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
@@ -93,6 +79,38 @@ export function SettingsView() {
         {children}
       </div>
     </div>
+  );
+
+  const ThemeOption = ({ value, label, icon: Icon }: { value: Theme, label: string, icon: React.ElementType }) => (
+    <button
+      onClick={() => setTheme(value)}
+      className={cn(
+        "flex flex-col items-center gap-2 p-3 rounded-lg border transition-all flex-1",
+        theme === value 
+          ? "bg-primary/10 border-primary text-primary" 
+          : "bg-secondary/50 border-transparent hover:bg-secondary hover:border-white/10"
+      )}
+    >
+      <Icon className="w-5 h-5" />
+      <span className="text-xs font-medium">{label}</span>
+    </button>
+  );
+
+  const AccentOption = ({ value, color, label }: { value: AccentColor, color: string, label: string }) => (
+    <button
+      onClick={() => setAccentColor(value)}
+      className={cn(
+        "flex items-center gap-3 p-2 pr-4 rounded-lg border transition-all flex-1",
+        accentColor === value 
+          ? "bg-secondary border-primary/50" 
+          : "bg-secondary/30 border-transparent hover:bg-secondary/50"
+      )}
+    >
+      <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: color }}>
+        {accentColor === value && <Check className="w-4 h-4 text-white" />}
+      </div>
+      <span className="text-sm font-medium">{label}</span>
+    </button>
   );
 
   return (
@@ -129,13 +147,45 @@ export function SettingsView() {
         </Section>
       )}
 
+      {/* Appearance Section */}
+      <Section title="Appearance" icon={Palette}>
+        <div className="space-y-4">
+          <div>
+            <p className="font-medium mb-3">Theme</p>
+            <div className="flex gap-2">
+              <ThemeOption value="dark" label="Dark" icon={Moon} />
+              <ThemeOption value="light" label="Light" icon={Sun} />
+              <ThemeOption value="system" label="Auto" icon={Monitor} />
+            </div>
+          </div>
+          
+          <div className="pt-2">
+            <p className="font-medium mb-3">Accent Color</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <AccentOption value="purple" color="hsl(270, 91%, 65%)" label="Purple" />
+              <AccentOption value="blue" color="hsl(217, 91%, 60%)" label="Blue" />
+              <AccentOption value="green" color="hsl(142, 71%, 45%)" label="Green" />
+            </div>
+          </div>
+
+          <div className="pt-2">
+             <SettingRow 
+              label="Compact Player Mode" 
+              description="Smaller player bar for more screen space"
+            >
+              <Switch checked={isCompactMode} onCheckedChange={setCompactMode} />
+            </SettingRow>
+          </div>
+        </div>
+      </Section>
+
       {/* Audio Section */}
       <Section title="Audio Quality" icon={Volume2}>
         <SettingRow label="Streaming Quality" description="Higher quality uses more data">
           <select 
             value={audioQuality}
             onChange={(e) => setAudioQuality(e.target.value)}
-            className="bg-secondary text-sm rounded-md border-none px-3 py-1 outline-none"
+            className="bg-secondary text-sm rounded-md border-none px-3 py-1 outline-none w-full sm:w-auto mt-2 sm:mt-0"
           >
             <option value="low">Low (96kbps)</option>
             <option value="normal">Normal (128kbps)</option>
@@ -175,63 +225,7 @@ export function SettingsView() {
         </SettingRow>
       </Section>
 
-      {/* Notifications */}
-      <Section title="Notifications" icon={Bell}>
-        <SettingRow label="Security" description="Alerts about account activity">
-          <Switch defaultChecked disabled />
-        </SettingRow>
-      </Section>
 
-      {/* Storage & Privacy */}
-      <Section title="Storage" icon={Smartphone}>
-        <div className="space-y-4">
-          <SettingRow 
-            label="Download Imported Music" 
-            description="Keep imported songs available offline for playback without internet"
-          >
-            <Switch defaultChecked />
-          </SettingRow>
-
-          <div className="bg-secondary/50 rounded-full h-2 overflow-hidden flex">
-            <div className="bg-primary w-[30%]" />
-            <div className="bg-blue-500 w-[15%]" />
-            <div className="bg-transparent flex-1" />
-          </div>
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <div className="flex gap-4">
-              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-primary" /> Audio</span>
-              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /> Cache</span>
-              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-secondary" /> Free</span>
-            </div>
-            <span>2.4 GB used</span>
-          </div>
-          
-          <Button variant="outline" className="w-full" onClick={handleClearCache}>
-            Clear Cache
-          </Button>
-
-          <div className="pt-2 border-t border-white/5">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <p className="font-medium">Local Library</p>
-                <p className="text-sm text-muted-foreground">
-                  {localTracks.length} tracks imported
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleClearLibrary}
-              disabled={localTracks.length === 0}
-              className="w-full"
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Remove All Imported Tracks
-            </Button>
-          </div>
-        </div>
-      </Section>
 
       {/* About */}
       <div className="text-center py-8 space-y-4">

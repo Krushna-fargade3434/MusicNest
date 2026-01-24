@@ -112,7 +112,7 @@ export function LibraryView() {
           className="flex flex-col md:flex-row items-start md:items-end gap-6 mb-8"
         >
           {/* Playlist Cover */}
-          <div className="w-48 h-48 md:w-56 md:h-56 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl shadow-purple-500/20">
+          <div className="hidden md:flex w-48 h-48 md:w-56 md:h-56 rounded-lg bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 items-center justify-center shadow-2xl shadow-purple-500/20">
             <Heart className="w-24 h-24 text-white fill-white" />
           </div>
 
@@ -151,7 +151,7 @@ export function LibraryView() {
         {localTracks.length > 0 ? (
           <div className="bg-black/20 rounded-lg overflow-hidden">
             {/* Header Row */}
-            <div className="grid grid-cols-[16px_4fr_minmax(60px,80px)_40px] gap-4 px-4 py-3 border-b border-white/5 text-sm text-muted-foreground">
+            <div className="grid grid-cols-[16px_4fr_minmax(60px,80px)_40px] gap-2 md:gap-4 px-2 md:px-4 py-3 border-b border-white/5 text-sm text-muted-foreground">
               <span className="text-center">#</span>
               <span>Title</span>
               <span className="flex justify-end">
@@ -173,14 +173,14 @@ export function LibraryView() {
                   transition={{ delay: index * 0.05 }}
                   onClick={() => handlePlayTrack(track)}
                   className={cn(
-                    "grid grid-cols-[16px_4fr_minmax(60px,80px)_40px] gap-4 px-4 py-3 border-b border-white/5 items-center hover:bg-white/5 transition-colors cursor-pointer group",
+                    "grid grid-cols-[16px_4fr_minmax(60px,80px)_40px] gap-2 md:gap-4 px-2 md:px-4 py-3 border-b border-white/5 items-center hover:bg-white/5 transition-colors cursor-pointer group",
                     isActive && "bg-white/10"
                   )}
                 >
                   {/* Number / Play */}
                   <div className="flex items-center justify-center">
                     <span className={cn(
-                      'group-hover:hidden text-sm tabular-nums',
+                      'group-hover:hidden text-xs md:text-sm tabular-nums',
                       isActive ? 'text-primary' : 'text-muted-foreground'
                     )}>
                       {isCurrentlyPlaying ? (
@@ -208,16 +208,19 @@ export function LibraryView() {
                   </div>
 
                   {/* Title & Artist */}
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
+                  <div className="flex items-center gap-2 md:gap-3 min-w-0">
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded bg-secondary flex items-center justify-center shrink-0 overflow-hidden">
                       {track.coverUrl ? (
                         <img src={track.coverUrl} alt={track.title} className="w-full h-full object-cover" />
                       ) : (
                         <Music className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
-                    <div className="min-w-0">
-                      <p className={cn('font-medium truncate', isActive && 'text-primary')}>
+                    <div className="min-w-0 flex-1">
+                      <p className={cn(
+                        'font-medium truncate text-xs md:text-base leading-tight md:leading-normal',
+                         isActive && 'text-primary'
+                      )}>
                         {track.title}
                       </p>
                     </div>

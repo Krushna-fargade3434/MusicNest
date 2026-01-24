@@ -15,6 +15,7 @@ export const usePlayerStore = create<PlayerStore>()(
       shuffle: false,
       repeat: 'none',
       isFullScreen: false,
+      sleepTimer: null,
 
       // Actions
       setCurrentTrack: (track) => set({ currentTrack: track }),
@@ -98,14 +99,16 @@ export const usePlayerStore = create<PlayerStore>()(
       playTrack: (track, queue) => {
         set({
           currentTrack: track,
-          queue: queue || get().queue,
+          queue: queue || [track],
           isPlaying: true,
           currentTime: 0,
         });
       },
+
+      setSleepTimer: (time) => set({ sleepTimer: time }),
     }),
     {
-      name: 'playnest-player',
+      name: 'player-storage',
       partialize: (state) => ({
         volume: state.volume,
         shuffle: state.shuffle,

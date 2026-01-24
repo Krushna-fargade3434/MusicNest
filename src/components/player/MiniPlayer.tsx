@@ -2,12 +2,14 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music, Maximize2, ListMusic } from 'lucide-react';
 import { usePlayerStore } from '@/stores/playerStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 
 interface MiniPlayerProps {
   onClick: () => void;
   onSeek: (time: number) => void;
+  className?: string;
 }
 
 function formatTime(seconds: number): string {
@@ -17,7 +19,7 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps & { className?: string }) {
+export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps) {
   const { 
     currentTrack, 
     isPlaying, 
@@ -29,6 +31,7 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps & { c
     next,
     setVolume,
   } = usePlayerStore();
+  const { isCompactMode } = useSettingsStore();
 
   if (!currentTrack) return null;
 
@@ -64,11 +67,17 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps & { c
         />
       </div>
 
-      <div className="grid grid-cols-3 items-center gap-4 px-4 py-3 pt-4">
+      <div className={cn(
+        "grid grid-cols-3 items-center gap-4 px-4",
+        isCompactMode ? "py-2" : "py-3 pt-4"
+      )}>
         {/* Left: Track Info */}
         <div className="flex items-center gap-3 min-w-0">
           <button
-            className="w-14 h-14 rounded-md bg-secondary flex items-center justify-center shrink-0 overflow-hidden group relative"
+            className={cn(
+              "rounded-md bg-secondary flex items-center justify-center shrink-0 overflow-hidden group relative",
+              isCompactMode ? "w-10 h-10" : "w-14 h-14"
+            )}
           >
             {currentTrack.coverUrl ? (
               <img 
@@ -89,6 +98,7 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps & { c
             </p>
           </div>
         </div>
+
 
         {/* Center: Playback Controls */}
         <div className="flex flex-col items-center gap-2">

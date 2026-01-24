@@ -62,6 +62,7 @@ export interface PlayerState {
   shuffle: boolean;
   repeat: 'none' | 'one' | 'all';
   isFullScreen: boolean;
+  sleepTimer: number | null;
 }
 
 export interface PlayerActions {
@@ -80,6 +81,7 @@ export interface PlayerActions {
   toggleRepeat: () => void;
   toggleFullScreen: () => void;
   playTrack: (track: Track, queue?: Track[]) => void;
+  setSleepTimer: (time: number | null) => void;
 }
 
 export type PlayerStore = PlayerState & PlayerActions;

@@ -11,10 +11,12 @@ export function useAudioPlayer() {
     volume,
     currentTime,
     repeat,
+    sleepTimer,
     setCurrentTime,
     setDuration,
     next,
     pause,
+    setSleepTimer,
   } = usePlayerStore();
 
   // Get the active media element
@@ -158,6 +160,20 @@ export function useAudioPlayer() {
       if (video) removeListeners(video);
     };
   }, [getMediaElement, repeat, next, setCurrentTime, setDuration]);
+
+  // Sleep Timer
+  useEffect(() => {
+    if (!sleepTimer) return;
+
+    const interval = setInterval(() => {
+      if (Date.now() >= sleepTimer) {
+        pause();
+        setSleepTimer(null);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sleepTimer, pause, setSleepTimer]);
 
   // Seek function
   const seek = useCallback((time: number) => {

@@ -17,10 +17,14 @@ import {
   Disc3,
   PlusCircle,
   User,
-  Share2,
   Moon,
+  Clock,
+  ListMusic,
 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/playerStore';
+import { usePlaylistStore } from '@/stores/playlistStore';
+import { useUserStore } from '@/stores/userStore';
+import { toast } from 'sonner';
 import { Slider } from '@/components/ui/slider';
 import {
   DropdownMenu,
@@ -29,6 +33,10 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
 
@@ -60,7 +68,28 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
     setVolume,
     toggleShuffle,
     toggleRepeat,
+    setSleepTimer,
   } = usePlayerStore();
+
+  const { playlists, addTrackToPlaylist, loadPlaylists } = usePlaylistStore();
+  const { currentUser } = useUserStore();
+
+  useEffect(() => {
+    if (currentUser && playlists.length === 0) {
+      loadPlaylists(currentUser.id);
+    }
+  }, [currentUser, playlists.length, loadPlaylists]);
+
+  const handleAddToPlaylist = async (playlistId: number) => {
+    if (!currentTrack) return;
+    await addTrackToPlaylist(playlistId, currentTrack.id);
+  };
+
+  const handleSetSleepTimer = (minutes: number) => {
+    const duration = minutes * 60 * 1000;
+    setSleepTimer(Date.now() + duration);
+    toast.success(`Sleep timer set for ${minutes} minutes`);
+  };
 
   const [localTime, setLocalTime] = useState(currentTime);
   const [isSeeking, setIsSeeking] = useState(false);
@@ -114,19 +143,63 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
                 <DropdownMenuContent className="w-56 bg-[#1a1a2e] border-white/10 text-white" align="end">
                   <DropdownMenuLabel>Options</DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="cursor-pointer focus:bg-white/10 focus:text-white">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    <span>Add to Playlist</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer focus:bg-white/10 focus:text-white">
-                    <Share2 className="mr-2 h-4 w-4" />
-                    <span>Share</span>
-                  </DropdownMenuItem>
+                  
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="cursor-pointer focus:bg-white/10 focus:text-white">
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      <span>Add to Playlist</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent className="bg-[#1a1a2e] border-white/10 text-white">
+                        {playlists.map(playlist => (
+                          <DropdownMenuItem 
+                            key={playlist.id}
+                            onClick={() => playlist.id && handleAddToPlaylist(playlist.id)}
+                            className="cursor-pointer focus:bg-white/10 focus:text-white"
+                          >
+                            <ListMusic className="mr-2 h-4 w-4" />
+                            <span>{playlist.name}</span>
+                          </DropdownMenuItem>
+                        ))}
+                        {playlists.length === 0 && (
+                          <DropdownMenuItem disabled>
+                            <span>No playlists</span>
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
+
                   <DropdownMenuSeparator className="bg-white/10" />
-                  <DropdownMenuItem className="cursor-pointer focus:bg-white/10 focus:text-white">
-                    <Moon className="mr-2 h-4 w-4" />
-                    <span>Sleep Timer</span>
-                  </DropdownMenuItem>
+
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="cursor-pointer focus:bg-white/10 focus:text-white">
+                      <Moon className="mr-2 h-4 w-4" />
+                      <span>Sleep Timer</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuPortal>
+                      <DropdownMenuSubContent className="bg-[#1a1a2e] border-white/10 text-white">
+                        {[15, 30, 45, 60].map(mins => (
+                          <DropdownMenuItem 
+                            key={mins}
+                            onClick={() => handleSetSleepTimer(mins)}
+                            className="cursor-pointer focus:bg-white/10 focus:text-white"
+                          >
+                            <Clock className="mr-2 h-4 w-4" />
+                            <span>{mins} minutes</span>
+                          </DropdownMenuItem>
+                        ))}
+                        <DropdownMenuSeparator className="bg-white/10" />
+                        <DropdownMenuItem 
+                            onClick={() => { setSleepTimer(null); toast.success("Sleep timer turned off"); }}
+                            className="cursor-pointer focus:bg-white/10 focus:text-white"
+                          >
+                            <Clock className="mr-2 h-4 w-4" />
+                            <span>Turn off</span>
+                          </DropdownMenuItem>
+                      </DropdownMenuSubContent>
+                    </DropdownMenuPortal>
+                  </DropdownMenuSub>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
