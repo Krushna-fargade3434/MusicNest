@@ -205,8 +205,8 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
             </div>
 
             {/* Album Art */}
-            <div className="flex-1 flex items-center justify-center px-8 py-4">
-              <div className="relative w-full max-w-[340px] aspect-square shadow-2xl rounded-xl overflow-hidden">
+            <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-2 sm:py-4">
+              <div className="relative w-full max-w-[280px] sm:max-w-[320px] md:max-w-[340px] aspect-square shadow-2xl rounded-xl overflow-hidden">
                 {currentTrack?.coverUrl ? (
                   <img
                     src={currentTrack.coverUrl}
@@ -215,34 +215,34 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
                   />
                 ) : (
                   <div className="w-full h-full bg-zinc-900 flex items-center justify-center border border-white/10">
-                    <Music className="w-24 h-24 text-muted-foreground/30" />
+                    <Music className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-muted-foreground/30" />
                   </div>
                 )}
               </div>
             </div>
 
             {/* Track Info & Controls */}
-            <div className="px-8 pb-8 pt-4">
+            <div className="px-4 sm:px-8 pb-6 sm:pb-8 pt-2 sm:pt-4">
               {/* Track Info */}
-              <div className="flex items-start justify-between mb-6">
+              <div className="flex items-start justify-between mb-4 sm:mb-6">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-2xl font-bold truncate mb-1">
+                  <h2 className="text-xl sm:text-2xl font-bold truncate mb-1">
                     {currentTrack?.title || 'No track selected'}
                   </h2>
                 </div>
                 <button 
                   onClick={() => setIsLiked(!isLiked)}
-                  className="p-2 shrink-0"
+                  className="p-1 sm:p-2 shrink-0"
                 >
                   <Heart className={cn(
-                    'w-7 h-7 transition-colors',
+                    'w-6 h-6 sm:w-7 sm:h-7 transition-colors',
                     isLiked ? 'text-primary fill-primary' : 'text-muted-foreground'
                   )} />
                 </button>
               </div>
 
               {/* Progress Bar */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <Slider
                   value={[localTime]}
                   max={duration || 100}
@@ -252,61 +252,61 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
                   onPointerDown={handleSeekStart}
                   className="cursor-pointer"
                 />
-                <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                <div className="flex justify-between mt-2 text-xs sm:text-sm text-muted-foreground">
                   <span>{formatTime(localTime)}</span>
                   <span>{formatTime(duration)}</span>
                 </div>
               </div>
 
               {/* Main Controls */}
-              <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center justify-between mb-6 sm:mb-8">
                 <button
                   onClick={toggleShuffle}
                   className={cn(
-                    'p-3',
+                    'p-2 sm:p-3',
                     shuffle ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
-                  <Shuffle className="w-6 h-6" />
+                  <Shuffle className="w-5 h-5 sm:w-6 sm:h-6" />
                 </button>
-                <button onClick={previous} className="p-3">
-                  <SkipBack className="w-9 h-9 fill-current" />
+                <button onClick={previous} className="p-2 sm:p-3">
+                  <SkipBack className="w-7 h-7 sm:w-9 sm:h-9 fill-current" />
                 </button>
                 <button
                   onClick={togglePlay}
-                  className="w-18 h-18 rounded-full bg-foreground text-background flex items-center justify-center hover:scale-105 transition-transform p-5"
+                  className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-foreground text-background flex items-center justify-center hover:scale-105 transition-transform p-4 sm:p-5"
                 >
                   {isPlaying ? (
-                    <Pause className="w-10 h-10 fill-current" />
+                    <Pause className="w-8 h-8 sm:w-10 sm:h-10 fill-current" />
                   ) : (
-                    <Play className="w-10 h-10 fill-current ml-1" />
+                    <Play className="w-8 h-8 sm:w-10 sm:h-10 fill-current ml-1" />
                   )}
                 </button>
-                <button onClick={next} className="p-3">
-                  <SkipForward className="w-9 h-9 fill-current" />
+                <button onClick={next} className="p-2 sm:p-3">
+                  <SkipForward className="w-7 h-7 sm:w-9 sm:h-9 fill-current" />
                 </button>
                 <button
                   onClick={toggleRepeat}
                   className={cn(
-                    'p-3',
+                    'p-2 sm:p-3',
                     repeat !== 'none' ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
                   {repeat === 'one' ? (
-                    <Repeat1 className="w-6 h-6" />
+                    <Repeat1 className="w-5 h-5 sm:w-6 sm:h-6" />
                   ) : (
-                    <Repeat className="w-6 h-6" />
+                    <Repeat className="w-5 h-5 sm:w-6 sm:h-6" />
                   )}
                 </button>
               </div>
 
               {/* Volume */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 <button
                   onClick={() => setVolume(volume === 0 ? 0.7 : 0)}
                   className="text-muted-foreground"
                 >
-                  {volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                  {volume === 0 ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>
                 <Slider
                   value={[volume * 100]}

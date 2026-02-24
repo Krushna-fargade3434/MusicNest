@@ -62,29 +62,30 @@ export function AccountView() {
       {/* Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-emerald-900/40 via-background to-background -z-10 h-[350px]" />
 
-      <div className="px-6 pb-32 pt-2 max-w-3xl mx-auto">
+      <div className="px-3 sm:px-6 pb-32 pt-2 max-w-3xl mx-auto">
         {currentUser ? (
           <>
             {/* Profile Header */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col md:flex-row items-center md:items-end gap-6 mb-8"
+              className="flex flex-col md:flex-row items-center md:items-end gap-4 sm:gap-6 mb-6 sm:mb-8"
             >
               <div
-                className="w-40 h-40 md:w-56 md:h-56 rounded-full flex items-center justify-center text-7xl font-bold text-white shadow-2xl"
+                className="w-32 h-32 sm:w-40 sm:h-40 md:w-56 md:h-56 rounded-full flex items-center justify-center text-5xl sm:text-6xl md:text-7xl font-bold text-white shadow-2xl"
                 style={{ backgroundColor: currentUser.avatarColor || 'hsl(270, 91%, 65%)' }}
               >
                 {currentUser.username.charAt(0).toUpperCase()}
               </div>
               <div className="text-center md:text-left">
-                <p className="text-sm font-medium mb-2">Profile</p>
-                <h1 className="text-5xl md:text-7xl font-black mb-4">{currentUser.username}</h1>
-                <p className="text-xl text-muted-foreground mb-4">{currentUser.email}</p>
-                <div className="flex items-center justify-center md:justify-start gap-2 text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm font-medium mb-1 sm:mb-2">Profile</p>
+                <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black mb-2 sm:mb-4">{currentUser.username}</h1>
+                <p className="text-base sm:text-lg md:text-xl text-muted-foreground mb-2 sm:mb-4">{currentUser.email}</p>
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 text-xs sm:text-sm text-muted-foreground">
                   <span>{localTracks.length} tracks</span>
                   <span>•</span>
-                  <span>Joined {new Date(currentUser.createdAt).toLocaleDateString()}</span>
+                  <span className="hidden sm:inline">Joined {new Date(currentUser.createdAt).toLocaleDateString()}</span>
+                  <span className="sm:hidden">Joined {new Date(currentUser.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
                 </div>
               </div>
             </motion.div>

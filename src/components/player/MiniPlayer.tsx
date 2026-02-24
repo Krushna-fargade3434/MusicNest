@@ -67,15 +67,15 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps) {
       </div>
 
       <div className={cn(
-        "grid grid-cols-3 items-center gap-4 px-4",
+        "grid grid-cols-3 items-center gap-2 sm:gap-4 px-2 sm:px-4",
         isCompactMode ? "py-2" : "py-3 pt-4"
       )}>
         {/* Left: Track Info */}
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             className={cn(
               "rounded-md bg-secondary flex items-center justify-center shrink-0 overflow-hidden group relative",
-              isCompactMode ? "w-10 h-10" : "w-14 h-14"
+              isCompactMode ? "w-9 h-9 sm:w-10 sm:h-10" : "w-12 h-12 sm:w-14 sm:h-14"
             )}
           >
             {currentTrack.coverUrl ? (
@@ -85,14 +85,14 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps) {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <Music className="w-6 h-6 text-muted-foreground" />
+              <Music className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground" />
             )}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <Maximize2 className="w-4 h-4 text-white" />
+              <Maximize2 className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
             </div>
           </button>
           <div className="min-w-0">
-            <p className="font-medium text-sm truncate hover:underline">
+            <p className="font-medium text-xs sm:text-sm truncate hover:underline">
               {currentTrack.title}
             </p>
           </div>
@@ -100,32 +100,32 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps) {
 
 
         {/* Center: Playback Controls */}
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-2 sm:gap-4">
             <button
               onClick={(e) => { e.stopPropagation(); previous(); }}
-              className="text-muted-foreground hover:text-foreground transition-colors p-2"
+              className="text-muted-foreground hover:text-foreground transition-colors p-1 sm:p-2"
               aria-label="Previous track"
             >
-              <SkipBack className="w-5 h-5 fill-current" />
+              <SkipBack className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); togglePlay(); }}
-              className="w-9 h-9 rounded-full bg-foreground text-background flex items-center justify-center hover:scale-105 transition-transform"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-foreground text-background flex items-center justify-center hover:scale-105 transition-transform"
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? (
-                <Pause className="w-5 h-5 fill-current" />
+                <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
               ) : (
-                <Play className="w-5 h-5 fill-current ml-0.5" />
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current ml-0.5" />
               )}
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); next(); }}
-              className="text-muted-foreground hover:text-foreground transition-colors p-2"
+              className="text-muted-foreground hover:text-foreground transition-colors p-1 sm:p-2"
               aria-label="Next track"
             >
-              <SkipForward className="w-5 h-5 fill-current" />
+              <SkipForward className="w-4 h-4 sm:w-5 sm:h-5 fill-current" />
             </button>
           </div>
           
@@ -138,14 +138,14 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps) {
         </div>
 
         {/* Right: Volume & Queue */}
-        <div className="flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-3">
           <button 
             onClick={(e) => e.stopPropagation()}
-            className="hidden md:flex text-muted-foreground hover:text-foreground transition-colors"
+            className="hidden lg:flex text-muted-foreground hover:text-foreground transition-colors"
           >
             <ListMusic className="w-5 h-5" />
           </button>
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden lg:flex items-center gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); setVolume(volume === 0 ? 0.7 : 0); }}
               className="text-muted-foreground hover:text-foreground transition-colors"
@@ -157,7 +157,7 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps) {
                 <Volume2 className="w-5 h-5" />
               )}
             </button>
-            <div className="w-24" onClick={(e) => e.stopPropagation()}>
+            <div className="w-20 xl:w-24" onClick={(e) => e.stopPropagation()}>
               <Slider
                 value={[volume * 100]}
                 max={100}
@@ -169,9 +169,9 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps) {
           </div>
           <button
             onClick={(e) => { e.stopPropagation(); onClick(); }}
-            className="p-2 text-muted-foreground hover:text-foreground transition-colors"
+            className="p-1 sm:p-2 text-muted-foreground hover:text-foreground transition-colors"
           >
-            <Maximize2 className="w-5 h-5" />
+            <Maximize2 className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>
