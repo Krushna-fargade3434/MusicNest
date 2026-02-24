@@ -2,28 +2,125 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>MusicNest - Your Personal Music Hub</title>
     <meta name="description" content="Import, organize, and play your music collection. Support for MP3, MP4, WAV, FLAC and more." />
     <meta name="author" content="MusicNest" />
+    
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="/MUSIC-NEST-LOGO.png" />
+    
+    <!-- Apple Touch Icons for iOS -->
+    <link rel="apple-touch-icon" href="/MUSIC-NEST-LOGO.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/MUSIC-NEST-LOGO.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/MUSIC-NEST-LOGO.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/MUSIC-NEST-LOGO.png" />
+    
+    <!-- iOS Web App Configuration -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="MusicNest" />
+    
+    <!-- PWA Theme Colors -->
+    <meta name="theme-color" content="#a855f7" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#09090b" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
 
+    <!-- Open Graph / Social Media -->
     <meta property="og:title" content="MusicNest - Your Personal Music Hub" />
     <meta property="og:description" content="Import, organize, and play your music collection. Support for MP3, MP4, WAV, FLAC and more." />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/MUSIC-NEST-LOGO.png" />
 
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@MusicNest" />
     <meta name="twitter:image" content="/MUSIC-NEST-LOGO.png" />
     
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   </head>
 
   <body>
+    <!-- Splash Screen for PWA -->
+    <style>
+      #splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        background: linear-gradient(135deg, #09090b 0%, #1a1a2e 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        opacity: 1;
+        transition: opacity 0.3s ease-out;
+      }
+      #splash-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      #splash-logo {
+        width: 120px;
+        height: 120px;
+        border-radius: 24px;
+        animation: pulse 2s ease-in-out infinite;
+        box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+      }
+      #splash-text {
+        margin-top: 24px;
+        font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      #splash-subtitle {
+        margin-top: 8px;
+        font-size: 14px;
+        color: #a1a1aa;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+      @keyframes pulse {
+        0%, 100% {
+          transform: scale(1);
+          box-shadow: 0 8px 32px rgba(168, 85, 247, 0.3);
+        }
+        50% {
+          transform: scale(1.05);
+          box-shadow: 0 12px 48px rgba(168, 85, 247, 0.5);
+        }
+      }
+    </style>
+    
+    <div id="splash-screen">
+      <img id="splash-logo" src="/MUSIC-NEST-LOGO.png" alt="MusicNest Logo" />
+      <div id="splash-text">MusicNest</div>
+      <div id="splash-subtitle">Your Personal Music Hub</div>
+    </div>
+    
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Hide splash screen after app loads -->
+    <script>
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const splash = document.getElementById('splash-screen');
+          if (splash) {
+            splash.classList.add('hidden');
+            setTimeout(() => splash.remove(), 300);
+          }
+        }, 500);
+      });
+    </script>
   </body>
 </html>

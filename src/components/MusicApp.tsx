@@ -1,21 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Header } from '@/components/layout/Header';
 import { MiniPlayer } from '@/components/player/MiniPlayer';
 import { FullScreenPlayer } from '@/components/player/FullScreenPlayer';
-import { HomeView } from '@/components/views/HomeView';
-import { LibraryView } from '@/components/views/LibraryView';
-import { PlaylistView } from '@/components/views/PlaylistView';
-import { AccountView } from '@/components/views/AccountView';
-import { SettingsView } from '@/components/views/SettingsView';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useUserStore } from '@/stores/userStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useLocalMusic } from '@/hooks/useLocalMusic';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { cn } from '@/lib/utils';
+import { ACCENT_COLORS } from '@/constants';
+
+// Lazy load views for better performance
+const HomeView = lazy(() => import('@/components/views/HomeView').then(m => ({ default: m.HomeView })));
+const LibraryView = lazy(() => import('@/components/views/LibraryView').then(m => ({ default: m.LibraryView })));
+const PlaylistView = lazy(() => import('@/components/views/PlaylistView').then(m => ({ default: m.PlaylistView })));
+const AccountView = lazy(() => import('@/components/views/AccountView').then(m => ({ default: m.AccountView })));
+const SettingsView = lazy(() => import('@/components/views/SettingsView').then(m => ({ default: m.SettingsView })));
+
+// Loading component
+function ViewLoader() {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+      <img src="/MUSIC-NEST-LOGO.png" alt="Music Nest" className="w-16 h-16 object-cover rounded-full" />
+      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
 export function MusicApp() {
   const [activeTab, setActiveTab] = useState('home');
@@ -40,18 +53,11 @@ export function MusicApp() {
 
     const setStyle = (name: string, value: string) => root.style.setProperty(name, value);
     
-    if (accentColor === 'purple') {
-      setStyle('--primary', '270 91% 65%');
-      setStyle('--ring', '270 91% 65%');
-      setStyle('--accent', '280 100% 70%');
-    } else if (accentColor === 'blue') {
-      setStyle('--primary', '217 91% 60%');
-      setStyle('--ring', '217 91% 60%');
-      setStyle('--accent', '221 83% 53%');
-    } else if (accentColor === 'green') {
-      setStyle('--primary', '142 71% 45%');
-      setStyle('--ring', '142 71% 45%');
-      setStyle('--accent', '142 76% 36%');
+    const colors = ACCENT_COLORS[accentColor];
+    if (colors) {
+      setStyle('--primary', colors.primary);
+      setStyle('--ring', colors.ring);
+      setStyle('--accent', colors.accent);
     }
   }, [theme, accentColor]);
 
@@ -102,11 +108,11 @@ export function MusicApp() {
         {/* Header */}
         <Header onNavigate={setActiveTab} />
 
-        {/* Page Content */}
+        {/* Page Content with Suspense */}
         <AnimatePresence mode="wait">
-          <div key={activeTab}>
+          <Suspense fallback={<ViewLoader />} key={activeTab}>
             {renderContent()}
-          </div>
+          </Suspense>
         </AnimatePresence>
       </main>
 

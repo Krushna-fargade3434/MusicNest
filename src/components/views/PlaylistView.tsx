@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Plus, Music, ArrowLeft, Trash2, Check, Search, X, MoreHorizontal } from 'lucide-react';
 import { useTrackStore } from '@/stores/trackStore';
@@ -247,9 +247,9 @@ export function PlaylistView() {
                                 <div 
                                   key={track.id} 
                                   className={cn(
-                                    "flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer active:scale-[0.99]",
+                                    "flex items-center gap-3 p-3 rounded-lg transition-colors active:scale-[0.99]",
                                     isSelected ? "bg-primary/10" : "hover:bg-secondary/50",
-                                    isAlreadyAdded && "opacity-50 cursor-not-allowed bg-transparent"
+                                    isAlreadyAdded ? "opacity-50 cursor-not-allowed bg-transparent" : "cursor-pointer"
                                   )}
                                   onClick={() => !isAlreadyAdded && toggleTrackSelection(track.id)}
                                 >

@@ -4,7 +4,6 @@ export interface User {
   id?: number;
   username: string;
   email: string;
-  password?: string;
   createdAt: Date;
   avatarColor?: string;
 }
@@ -100,10 +99,12 @@ export interface UserActions {
 
 export type UserStore = UserState & UserActions;
 
-// Supported file extensions
-export const AUDIO_EXTENSIONS = ['.mp3', '.wav', '.flac', '.ogg', '.m4a', '.aac', '.wma'];
-export const VIDEO_EXTENSIONS = ['.mp4', '.mp5', '.mkv', '.avi', '.webm', '.mov', '.wmv'];
-export const ALL_EXTENSIONS = [...AUDIO_EXTENSIONS, ...VIDEO_EXTENSIONS];
+// Re-export constants for backward compatibility
+export { 
+  AUDIO_EXTENSIONS, 
+  VIDEO_EXTENSIONS, 
+  ALL_SUPPORTED_EXTENSIONS as ALL_EXTENSIONS 
+} from '@/constants';
 
 export const AUDIO_MIME_TYPES = [
   'audio/mpeg',

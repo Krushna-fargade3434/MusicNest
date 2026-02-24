@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Play, Music, Clock, Sparkles, TrendingUp, ChevronRight } from 'lucide-react';
 import { usePlayerStore } from '@/stores/playerStore';
@@ -59,6 +58,7 @@ export function HomeView({ onNavigate }: HomeViewProps) {
                 transition={{ delay: index * 0.05 }}
                 onClick={() => playTrack(track, localTracks)}
                 className="flex items-center bg-white/10 hover:bg-white/20 rounded-md overflow-hidden group transition-colors"
+                aria-label={`Play ${track.title} by ${track.artist}`}
               >
                 <div className="w-12 h-12 md:w-14 md:h-14 bg-secondary flex items-center justify-center shrink-0">
                   {track.coverUrl ? (
@@ -100,6 +100,7 @@ export function HomeView({ onNavigate }: HomeViewProps) {
                   transition={{ delay: 0.1 + index * 0.03 }}
                   onClick={() => playTrack(track, localTracks)}
                   className="group p-4 rounded-lg bg-card hover:bg-secondary/80 transition-colors text-left"
+                  aria-label={`Play ${track.title}`}
                 >
                   <div className="relative aspect-square rounded-md mb-4 bg-secondary overflow-hidden shadow-lg">
                     {track.coverUrl ? (

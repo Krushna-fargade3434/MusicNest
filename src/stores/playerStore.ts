@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { PlayerStore, Track } from '@/types/music';
+import { SEEK_RESTART_THRESHOLD, DEFAULT_VOLUME } from '@/constants';
 
 export const usePlayerStore = create<PlayerStore>()(
   persist(
@@ -9,7 +10,7 @@ export const usePlayerStore = create<PlayerStore>()(
       currentTrack: null,
       queue: [],
       isPlaying: false,
-      volume: 0.7,
+      volume: DEFAULT_VOLUME,
       currentTime: 0,
       duration: 0,
       shuffle: false,
@@ -63,8 +64,8 @@ export const usePlayerStore = create<PlayerStore>()(
         const { queue, currentTrack, currentTime } = get();
         if (!currentTrack || queue.length === 0) return;
         
-        // If more than 3 seconds in, restart current track
-        if (currentTime > 3) {
+        // If more than SEEK_RESTART_THRESHOLD seconds in, restart current track
+        if (currentTime > SEEK_RESTART_THRESHOLD) {
           set({ currentTime: 0 });
           return;
         }

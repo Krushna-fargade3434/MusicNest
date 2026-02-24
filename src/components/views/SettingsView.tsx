@@ -1,25 +1,28 @@
-import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Volume2, 
   Info, 
   Heart, 
   Moon, 
-  Bell, 
-  Shield, 
-  Zap,
-  ChevronRight,
   LogOut,
   User as UserIcon,
   Palette,
-  Layout,
   Sun,
   Monitor,
-  Check
+  Check,
+  Play,
+  Library,
+  Zap,
+  SkipForward,
+  Coffee,
+  Grid3x3,
+  List,
+  ArrowDownAZ,
+  FileType
 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useUserStore } from '@/stores/userStore';
-import { useSettingsStore, Theme, AccentColor } from '@/stores/settingsStore';
+import { useSettingsStore, Theme, AccentColor, LibraryView, SortBy } from '@/stores/settingsStore';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -33,15 +36,25 @@ export function SettingsView() {
   const { 
     theme, 
     accentColor, 
-    isCompactMode, 
+    isCompactMode,
+    showAnimations,
+    autoPlayNext,
+    skipDuration,
+    keepScreenAwake,
+    libraryView,
+    sortBy,
+    showFileExtensions,
     setTheme, 
     setAccentColor, 
-    setCompactMode 
+    setCompactMode,
+    setShowAnimations,
+    setAutoPlayNext,
+    setSkipDuration,
+    setKeepScreenAwake,
+    setLibraryView,
+    setSortBy,
+    setShowFileExtensions
   } = useSettingsStore();
-
-  const [audioQuality, setAudioQuality] = useState('high');
-  const [crossfade, setCrossfade] = useState(0);
-  const [dataSaver, setDataSaver] = useState(false);
 
   const handleLogout = () => {
     if (confirm('Are you sure you want to log out?')) {
@@ -85,10 +98,10 @@ export function SettingsView() {
     <button
       onClick={() => setTheme(value)}
       className={cn(
-        "flex flex-col items-center gap-2 p-3 rounded-lg border transition-all flex-1",
+        "flex flex-col items-center gap-2 p-3 rounded-lg transition-all flex-1",
         theme === value 
-          ? "bg-primary/10 border-primary text-primary" 
-          : "bg-secondary/50 border-transparent hover:bg-secondary hover:border-white/10"
+          ? "bg-primary/10 border-2 border-primary text-primary" 
+          : "bg-secondary/50 border border-secondary hover:bg-secondary"
       )}
     >
       <Icon className="w-5 h-5" />
@@ -138,12 +151,6 @@ export function SettingsView() {
               Log out
             </Button>
           </div>
-          <div className="pt-2">
-            <Button variant="ghost" className="w-full justify-between" disabled>
-              <span>Subscription Plan</span>
-              <span className="text-primary font-medium">Free</span>
-            </Button>
-          </div>
         </Section>
       )}
 
@@ -180,48 +187,135 @@ export function SettingsView() {
       </Section>
 
       {/* Audio Section */}
-      <Section title="Audio Quality" icon={Volume2}>
-        <SettingRow label="Streaming Quality" description="Higher quality uses more data">
-          <select 
-            value={audioQuality}
-            onChange={(e) => setAudioQuality(e.target.value)}
-            className="bg-secondary text-sm rounded-md border-none px-3 py-1 outline-none w-full sm:w-auto mt-2 sm:mt-0"
-          >
-            <option value="low">Low (96kbps)</option>
-            <option value="normal">Normal (128kbps)</option>
-            <option value="high">High (320kbps)</option>
-            <option value="lossless">Lossless</option>
-          </select>
-        </SettingRow>
-
-        <div className="space-y-3 pt-2">
+      <Section title="Audio" icon={Volume2}>
+        <div className="space-y-3">
           <div className="flex justify-between text-sm">
-            <span>Crossfade</span>
-            <span className="text-muted-foreground">{crossfade}s</span>
+            <span className="font-medium">Volume</span>
+            <span className="text-muted-foreground">{Math.round(volume * 100)}%</span>
           </div>
           <Slider
-            value={[crossfade]}
-            max={12}
-            step={1}
-            onValueChange={(val) => setCrossfade(val[0])}
+            value={[volume]}
+            max={1}
+            step={0.01}
+            onValueChange={(val) => setVolume(val[0])}
           />
         </div>
-
-        <SettingRow label="Normalize Volume" description="Set the same volume level for all tracks">
-          <Switch defaultChecked />
-        </SettingRow>
       </Section>
 
       {/* Playback Section */}
-      <Section title="Playback" icon={Zap}>
-        <SettingRow label="Autoplay" description="Keep listening to similar songs when your music ends">
-          <Switch defaultChecked />
+      <Section title="Playback" icon={Play}>
+        <SettingRow 
+          label="Auto-play Next Track" 
+          description="Automatically play the next song in queue"
+        >
+          <Switch checked={autoPlayNext} onCheckedChange={setAutoPlayNext} />
         </SettingRow>
-        <SettingRow label="Data Saver" description="Lower audio quality on cellular networks">
-          <Switch checked={dataSaver} onCheckedChange={setDataSaver} />
+        
+        <div className="space-y-3 pt-2">
+          <div className="flex justify-between text-sm">
+            <span className="font-medium">Skip Duration</span>
+            <span className="text-muted-foreground">{skipDuration}s</span>
+          </div>
+          <Slider
+            value={[skipDuration]}
+            min={5}
+            max={30}
+            step={5}
+            onValueChange={(val) => setSkipDuration(val[0])}
+          />
+          <p className="text-xs text-muted-foreground">Use arrow keys to skip forward/backward</p>
+        </div>
+
+        <SettingRow 
+          label="Keep Screen Awake" 
+          description="Prevent screen from sleeping during playback"
+        >
+          <Switch 
+            checked={keepScreenAwake} 
+            onCheckedChange={(checked) => {
+              setKeepScreenAwake(checked);
+              toast({
+                title: checked ? 'Screen will stay awake' : 'Screen sleep enabled',
+                description: checked ? 'Screen won\'t dim while music plays' : 'Normal screen behavior restored',
+              });
+            }} 
+          />
         </SettingRow>
-        <SettingRow label="Offline Mode" description="Only play downloaded music">
-          <Switch />
+      </Section>
+
+      {/* Library Section */}
+      <Section title="Library" icon={Library}>
+        <div className="space-y-4">
+          <div>
+            <p className="font-medium mb-3">View Type</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setLibraryView('grid')}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 rounded-lg transition-all flex-1",
+                  libraryView === 'grid'
+                    ? "bg-primary/10 border-2 border-primary text-primary"
+                    : "bg-secondary/50 border border-secondary hover:bg-secondary"
+                )}
+              >
+                <Grid3x3 className="w-4 h-4" />
+                <span className="text-sm font-medium">Grid</span>
+              </button>
+              <button
+                onClick={() => setLibraryView('list')}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 rounded-lg transition-all flex-1",
+                  libraryView === 'list'
+                    ? "bg-primary/10 border-2 border-primary text-primary"
+                    : "bg-secondary/50 border border-secondary hover:bg-secondary"
+                )}
+              >
+                <List className="w-4 h-4" />
+                <span className="text-sm font-medium">List</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <SettingRow label="Sort By" description="Default sorting for your library">
+              <select 
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortBy)}
+                className="bg-secondary text-sm rounded-md border-none px-3 py-1.5 outline-none w-full min-w-[140px] sm:w-auto mt-2 sm:mt-0"
+              >
+                <option value="dateAdded">Date Added</option>
+                <option value="title">Title (A-Z)</option>
+                <option value="artist">Artist (A-Z)</option>
+                <option value="duration">Duration</option>
+              </select>
+            </SettingRow>
+          </div>
+
+          <SettingRow 
+            label="Show File Extensions" 
+            description="Display file types (MP3, FLAC, etc.)"
+          >
+            <Switch checked={showFileExtensions} onCheckedChange={setShowFileExtensions} />
+          </SettingRow>
+        </div>
+      </Section>
+
+      {/* Accessibility Section */}
+      <Section title="Accessibility" icon={Zap}>
+        <SettingRow 
+          label="Enable Animations" 
+          description="Show motion effects and transitions"
+        >
+          <Switch 
+            checked={showAnimations} 
+            onCheckedChange={(checked) => {
+              setShowAnimations(checked);
+              toast({
+                title: checked ? 'Animations enabled' : 'Animations disabled',
+                description: checked ? 'Motion effects will be shown' : 'Reduced motion for better accessibility',
+              });
+            }} 
+          />
         </SettingRow>
       </Section>
 
@@ -238,7 +332,7 @@ export function SettingsView() {
           </Button>
         </div>
         <div>
-          <p className="font-bold">MusicNest v1.2.0</p>
+          <p className="font-bold">MusicNest v1.3.0</p>
           <p className="text-sm text-muted-foreground">Made with love for music</p>
         </div>
       </div>

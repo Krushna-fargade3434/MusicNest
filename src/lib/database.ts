@@ -1,7 +1,20 @@
 import Dexie, { type EntityTable } from 'dexie';
 import type { User, StoredFile, Track, Playlist, PlaylistTrack } from '@/types/music';
+import { AVATAR_COLORS, DB_NAME } from '@/constants';
 
-// PlayNest Database using Dexie.js (IndexedDB wrapper)
+/**
+ * MusicNest Database using Dexie.js (IndexedDB wrapper)
+ * 
+ * OFFLINE SUPPORT:
+ * All music files are stored as Blob objects in IndexedDB, which means:
+ * - Your music is saved locally on your device
+ * - Works 100% offline after initial import
+ * - No internet required for playback
+ * - Files persist across browser sessions
+ * - Typical storage: 1-10GB+ depending on your library
+ * 
+ * Privacy: All data stays on your device. Nothing is sent to external servers.
+ */
 class MusicNestDB extends Dexie {
   users!: EntityTable<User, 'id'>;
   files!: EntityTable<StoredFile, 'id'>;
@@ -10,7 +23,7 @@ class MusicNestDB extends Dexie {
   playlistTracks!: EntityTable<PlaylistTrack, 'id'>;
 
   constructor() {
-    super('MusicNestDB');
+    super(DB_NAME);
     
     this.version(1).stores({
       users: '++id, username, email, createdAt',
@@ -28,22 +41,12 @@ class MusicNestDB extends Dexie {
 export const db = new MusicNestDB();
 
 // User operations
-export async function createUser(username: string, email: string, password?: string): Promise<User> {
-  const avatarColors = [
-    'hsl(270, 91%, 65%)',
-    'hsl(280, 100%, 70%)',
-    'hsl(320, 85%, 60%)',
-    'hsl(200, 90%, 60%)',
-    'hsl(150, 80%, 50%)',
-    'hsl(30, 90%, 60%)',
-  ];
-  
+export async function createUser(username: string, email: string): Promise<User> {
   const user: User = {
     username,
     email,
-    password,
     createdAt: new Date(),
-    avatarColor: avatarColors[Math.floor(Math.random() * avatarColors.length)],
+    avatarColor: AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)],
   };
   
   const id = await db.users.add(user);

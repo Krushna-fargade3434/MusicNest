@@ -1,0 +1,22 @@
+# Ignore build outputs
+dist
+dist-ssr
+build
+*.local
+
+# Ignore dependencies
+node_modules
+bun.lockb
+package-lock.json
+yarn.lock
+
+# Ignore generated files
+coverage
+.next
+.cache
+
+# Ignore config files that shouldn't be formatted
+.vscode
+.idea
+*.min.js
+*.min.css

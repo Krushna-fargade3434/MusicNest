@@ -1,11 +1,13 @@
-import React from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Play, Pause, Music, Clock, MoreHorizontal, Heart, Pencil, Trash2 } from 'lucide-react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useTrackStore } from '@/stores/trackStore';
+import { useSettingsStore } from '@/stores/settingsStore';
 import { useLocalMusic } from '@/hooks/useLocalMusic';
 import { updateTrack as dbUpdateTrack, deleteTrack as dbDeleteTrack } from '@/lib/database';
 import { cn } from '@/lib/utils';
+import type { Track } from '@/types/music';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,13 +47,39 @@ export function LibraryView() {
   const { localTracks, updateTrack, removeTrack } = useTrackStore();
   const { openFilePicker, FileInput } = useLocalMusic();
   const { currentTrack, isPlaying, playTrack, togglePlay } = usePlayerStore();
+  const { sortBy, showFileExtensions, libraryView, showAnimations } = useSettingsStore();
 
-  const [renameDialogOpen, setRenameDialogOpen] = React.useState(false);
-  const [trackToRename, setTrackToRename] = React.useState<typeof localTracks[0] | null>(null);
-  const [newName, setNewName] = React.useState("");
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [trackToRename, setTrackToRename] = useState<Track | null>(null);
+  const [newName, setNewName] = useState("");
 
-  const [deleteAlertOpen, setDeleteAlertOpen] = React.useState(false);
-  const [trackToDelete, setTrackToDelete] = React.useState<typeof localTracks[0] | null>(null);
+  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false);
+  const [trackToDelete, setTrackToDelete] = useState<Track | null>(null);
+
+  // Sort tracks based on settings
+  const sortedTracks = useMemo(() => {
+    const tracks = [...localTracks];
+    
+    switch (sortBy) {
+      case 'title':
+        return tracks.sort((a, b) => a.title.localeCompare(b.title));
+      case 'artist':
+        return tracks.sort((a, b) => (a.artist || '').localeCompare(b.artist || ''));
+      case 'duration':
+        return tracks.sort((a, b) => b.duration - a.duration);
+      case 'dateAdded':
+      default:
+        return tracks.sort((a, b) => 
+          new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime()
+        );
+    }
+  }, [localTracks, sortBy]);
+
+  // Get file extension helper
+  const getFileExtension = (filename: string) => {
+    const ext = filename.split('.').pop()?.toUpperCase();
+    return ext || '';
+  };
 
   const handleRename = async () => {
     if (trackToRename && newName.trim()) {
@@ -93,7 +121,7 @@ export function LibraryView() {
     }
   };
 
-  const totalDuration = localTracks.reduce((acc, track) => acc + track.duration, 0);
+  const totalDuration = sortedTracks.reduce((acc, track) => acc + track.duration, 0);
   const hours = Math.floor(totalDuration / 3600);
   const minutes = Math.floor((totalDuration % 3600) / 60);
 
@@ -121,7 +149,7 @@ export function LibraryView() {
             <p className="text-sm font-medium mb-2">Playlist</p>
             <h1 className="text-5xl md:text-7xl font-black mb-4">Your Library</h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span className="font-medium text-foreground">{localTracks.length} songs</span>
+              <span className="font-medium text-foreground">{sortedTracks.length} songs</span>
               <span>•</span>
               <span>{hours > 0 ? `${hours} hr ` : ''}{minutes} min</span>
             </div>
@@ -130,10 +158,11 @@ export function LibraryView() {
 
         {/* Action Bar */}
         <div className="flex items-center gap-4 mb-6">
-          {localTracks.length > 0 && (
+          {sortedTracks.length > 0 && (
             <button
-              onClick={() => localTracks[0] && playTrack(localTracks[0], localTracks)}
+              onClick={() => sortedTracks[0] && playTrack(sortedTracks[0], sortedTracks)}
               className="w-14 h-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center hover:scale-105 hover:bg-primary/90 transition-all shadow-lg shadow-primary/30"
+              aria-label="Play all tracks"
             >
               <Play className="w-7 h-7 ml-1 fill-current" />
             </button>
@@ -141,6 +170,7 @@ export function LibraryView() {
           <button
             onClick={openFilePicker}
             className="px-6 py-3 rounded-full border border-foreground/20 font-semibold hover:border-foreground hover:scale-105 transition-all flex items-center gap-2"
+            aria-label="Add songs to library"
           >
             <Plus className="w-5 h-5" />
             Add Songs
@@ -148,7 +178,7 @@ export function LibraryView() {
         </div>
 
         {/* Track List */}
-        {localTracks.length > 0 ? (
+        {sortedTracks.length > 0 ? (
           <div className="bg-black/20 rounded-lg overflow-hidden">
             {/* Header Row */}
             <div className="grid grid-cols-[16px_4fr_minmax(60px,80px)_40px] gap-2 md:gap-4 px-2 md:px-4 py-3 border-b border-white/5 text-sm text-muted-foreground">
@@ -161,16 +191,16 @@ export function LibraryView() {
             </div>
 
             {/* Track Rows */}
-            {localTracks.map((track, index) => {
+            {sortedTracks.map((track, index) => {
               const isActive = currentTrack?.id === track.id;
               const isCurrentlyPlaying = isActive && isPlaying;
 
               return (
                 <motion.div
                   key={track.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  initial={showAnimations ? { opacity: 0, x: -20 } : false}
+                  animate={showAnimations ? { opacity: 1, x: 0 } : false}
+                  transition={showAnimations ? { delay: index * 0.05 } : undefined}
                   onClick={() => handlePlayTrack(track)}
                   className={cn(
                     "grid grid-cols-[16px_4fr_minmax(60px,80px)_40px] gap-2 md:gap-4 px-2 md:px-4 py-3 border-b border-white/5 items-center hover:bg-white/5 transition-colors cursor-pointer group",
@@ -222,6 +252,9 @@ export function LibraryView() {
                          isActive && 'text-primary'
                       )}>
                         {track.title}
+                        {showFileExtensions && track.fileName && (
+                          <span className="text-xs text-muted-foreground ml-1">• {getFileExtension(track.fileName)}</span>
+                        )}
                       </p>
                     </div>
                   </div>

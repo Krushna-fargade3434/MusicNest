@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Home, ListMusic, Library, User } from 'lucide-react';
 import { cn } from '@/lib/utils';

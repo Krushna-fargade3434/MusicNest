@@ -1,9 +1,12 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
+import { useSettingsStore } from '@/stores/settingsStore';
+import { SEEK_RESTART_THRESHOLD } from '@/constants';
 
 export function useAudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const wakeLockRef = useRef<any>(null);
   
   const {
     currentTrack,
@@ -18,6 +21,8 @@ export function useAudioPlayer() {
     pause,
     setSleepTimer,
   } = usePlayerStore();
+
+  const { autoPlayNext, skipDuration, keepScreenAwake } = useSettingsStore();
 
   // Get the active media element
   const getMediaElement = useCallback(() => {
@@ -39,13 +44,18 @@ export function useAudioPlayer() {
     }
 
     return () => {
+      // Proper cleanup on unmount
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = '';
+        audioRef.current.load(); // Release resources
+        audioRef.current = null;
       }
       if (videoRef.current) {
         videoRef.current.pause();
         videoRef.current.src = '';
+        videoRef.current.load(); // Release resources
+        videoRef.current = null;
       }
     };
   }, []);
@@ -135,7 +145,8 @@ export function useAudioPlayer() {
           element.currentTime = 0;
           element.play();
         }
-      } else {
+      } else if (autoPlayNext) {
+        // Only auto-play next if setting is enabled
         next();
       }
     };
@@ -159,7 +170,79 @@ export function useAudioPlayer() {
       if (audio) removeListeners(audio);
       if (video) removeListeners(video);
     };
-  }, [getMediaElement, repeat, next, setCurrentTime, setDuration]);
+  }, [getMediaElement, repeat, next, setCurrentTime, setDuration, autoPlayNext]);
+
+  // Wake Lock - Keep screen awake during playback
+  useEffect(() => {
+    if (!('wakeLock' in navigator)) return;
+
+    const requestWakeLock = async () => {
+      try {
+        if (isPlaying && keepScreenAwake && currentTrack) {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+          console.log('Wake Lock active');
+        }
+      } catch (err) {
+        console.error('Wake Lock error:', err);
+      }
+    };
+
+    const releaseWakeLock = async () => {
+      if (wakeLockRef.current) {
+        try {
+          await wakeLockRef.current.release();
+          wakeLockRef.current = null;
+          console.log('Wake Lock released');
+        } catch (err) {
+          console.error('Wake Lock release error:', err);
+        }
+      }
+    };
+
+    if (isPlaying && keepScreenAwake) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    return () => {
+      releaseWakeLock();
+    };
+  }, [isPlaying, keepScreenAwake, currentTrack]);
+
+  // Keyboard Controls
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Don't interfere with input fields
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      const element = getMediaElement();
+      if (!element) return;
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          // Skip backward
+          e.preventDefault();
+          const newTimeBackward = Math.max(0, element.currentTime - skipDuration);
+          element.currentTime = newTimeBackward;
+          setCurrentTime(newTimeBackward);
+          break;
+        
+        case 'ArrowRight':
+          // Skip forward
+          e.preventDefault();
+          const newTimeForward = Math.min(element.duration, element.currentTime + skipDuration);
+          element.currentTime = newTimeForward;
+          setCurrentTime(newTimeForward);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [getMediaElement, skipDuration, setCurrentTime]);
 
   // Sleep Timer
   useEffect(() => {

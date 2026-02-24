@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, createElement, ReactElement, ChangeEvent } from 'react';
 import { 
   AUDIO_EXTENSIONS, 
   VIDEO_EXTENSIONS, 
@@ -17,6 +17,13 @@ import {
 import { useUserStore } from '@/stores/userStore';
 import { useTrackStore } from '@/stores/trackStore';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  FILE_ACCEPT_STRING, 
+  DEFAULT_ARTIST, 
+  DEFAULT_ALBUM, 
+  FILENAME_DELIMITERS,
+  METADATA_TIMEOUT 
+} from '@/constants';
 
 // Generate unique ID
 function generateId(): string {
@@ -53,8 +60,7 @@ function parseFilename(filename: string): { title: string; artist: string } {
   const nameWithoutExt = filename.slice(0, filename.lastIndexOf('.'));
   
   // Try to split by common delimiters
-  const delimiters = [' - ', ' – ', '_-_'];
-  for (const delimiter of delimiters) {
+  for (const delimiter of FILENAME_DELIMITERS) {
     if (nameWithoutExt.includes(delimiter)) {
       const parts = nameWithoutExt.split(delimiter);
       return {
@@ -66,7 +72,7 @@ function parseFilename(filename: string): { title: string; artist: string } {
   
   return {
     title: nameWithoutExt.trim(),
-    artist: 'Unknown Artist',
+    artist: DEFAULT_ARTIST,
   };
 }
 
@@ -98,7 +104,7 @@ async function extractMetadata(
     setTimeout(() => {
       URL.revokeObjectURL(url);
       resolve({ duration: 0 });
-    }, 5000);
+    }, METADATA_TIMEOUT);
   });
 }
 
@@ -107,6 +113,24 @@ export function useLocalMusic() {
   const currentUser = useUserStore((state) => state.currentUser);
   const { localTracks, addTracks, setLocalTracks } = useTrackStore();
   const inputRef = useRef<HTMLInputElement>(null);
+  const blobUrlsRef = useRef<Set<string>>(new Set());
+
+  // Cleanup blob URLs on unmount
+  useEffect(() => {
+    return () => {
+      blobUrlsRef.current.forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
+      blobUrlsRef.current.clear();
+    };
+  }, []);
+
+  // Helper to create and track blob URL
+  const createTrackedBlobUrl = useCallback((blob: Blob): string => {
+    const url = URL.createObjectURL(blob);
+    blobUrlsRef.current.add(url);
+    return url;
+  }, []);
 
   // Load tracks from database on mount
   const loadTracksFromDB = useCallback(async () => {
@@ -123,7 +147,7 @@ export function useLocalMusic() {
           if (file?.blob) {
             return {
               ...track,
-              blobUrl: URL.createObjectURL(file.blob),
+              blobUrl: createTrackedBlobUrl(file.blob),
             };
           }
           return track;
@@ -134,7 +158,7 @@ export function useLocalMusic() {
     } catch (error) {
       console.error('Failed to load tracks from DB:', error);
     }
-  }, [currentUser?.id, setLocalTracks]);
+  }, [currentUser?.id, setLocalTracks, createTrackedBlobUrl]);
 
   // Import files
   const importFiles = useCallback(async (files: FileList | File[]) => {
@@ -213,11 +237,11 @@ export function useLocalMusic() {
           id: generateId(),
           title,
           artist,
-          album: 'Unknown Album',
+          album: DEFAULT_ALBUM,
           duration,
           fileId,
           userId: currentUser.id,
-          blobUrl: URL.createObjectURL(blob),
+          blobUrl: createTrackedBlobUrl(blob),
           isVideo: fileType === 'video',
           addedAt: new Date(),
         };
@@ -249,7 +273,7 @@ export function useLocalMusic() {
   }, []);
 
   // Handle file input change
-  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       importFiles(e.target.files);
       // Reset input
@@ -258,11 +282,11 @@ export function useLocalMusic() {
   }, [importFiles]);
 
   // Create hidden input element
-  const FileInput = React.useCallback((): React.ReactElement => {
-    return React.createElement('input', {
+  const FileInput = useCallback((): ReactElement => {
+    return createElement('input', {
       ref: inputRef,
       type: 'file',
-      accept: '.mp3,.wav,.flac,.ogg,.m4a,.aac,.wma,.mp4,.mp5,.mkv,.avi,.webm,.mov,.wmv',
+      accept: FILE_ACCEPT_STRING,
       multiple: true,
       onChange: handleFileChange,
       className: 'hidden',

@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { Track } from '@/types/music';
 
 interface TrackStore {
@@ -14,11 +13,10 @@ interface TrackStore {
 }
 
 export const useTrackStore = create<TrackStore>()(
-  persist(
-    (set, get) => ({
-      localTracks: [],
-      
-      setLocalTracks: (tracks) => set({ localTracks: tracks }),
+  (set, get) => ({
+    localTracks: [],
+    
+    setLocalTracks: (tracks) => set({ localTracks: tracks }),
       
       addTrack: (track) => set((state) => {
         // Prevent duplicates
@@ -34,20 +32,31 @@ export const useTrackStore = create<TrackStore>()(
         return { localTracks: [...state.localTracks, ...newTracks] };
       }),
       
-      removeTrack: (id) => set((state) => ({
-        localTracks: state.localTracks.filter((t) => t.id !== id),
-      })),
+      removeTrack: (id) => set((state) => {
+        // Cleanup blob URL before removing track
+        const track = state.localTracks.find((t) => t.id === id);
+        if (track?.blobUrl) {
+          URL.revokeObjectURL(track.blobUrl);
+        }
+        return {
+          localTracks: state.localTracks.filter((t) => t.id !== id),
+        };
+      }),
 
       updateTrack: (track) => set((state) => ({
         localTracks: state.localTracks.map((t) => t.id === track.id ? track : t),
       })),
       
-      clearTracks: () => set({ localTracks: [] }),
+      clearTracks: () => set((state) => {
+        // Cleanup all blob URLs before clearing
+        state.localTracks.forEach((track) => {
+          if (track.blobUrl) {
+            URL.revokeObjectURL(track.blobUrl);
+          }
+        });
+        return { localTracks: [] };
+      }),
       
       getTrackById: (id) => get().localTracks.find((t) => t.id === id),
-    }),
-    {
-      name: 'playnest-tracks',
-    }
-  )
+  })
 );

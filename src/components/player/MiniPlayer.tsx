@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Music, Maximize2, ListMusic } from 'lucide-react';
 import { usePlayerStore } from '@/stores/playerStore';
@@ -106,12 +105,14 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps) {
             <button
               onClick={(e) => { e.stopPropagation(); previous(); }}
               className="text-muted-foreground hover:text-foreground transition-colors p-2"
+              aria-label="Previous track"
             >
               <SkipBack className="w-5 h-5 fill-current" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); togglePlay(); }}
               className="w-9 h-9 rounded-full bg-foreground text-background flex items-center justify-center hover:scale-105 transition-transform"
+              aria-label={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? (
                 <Pause className="w-5 h-5 fill-current" />
@@ -122,6 +123,7 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps) {
             <button
               onClick={(e) => { e.stopPropagation(); next(); }}
               className="text-muted-foreground hover:text-foreground transition-colors p-2"
+              aria-label="Next track"
             >
               <SkipForward className="w-5 h-5 fill-current" />
             </button>
@@ -147,6 +149,7 @@ export function MiniPlayer({ onClick, onSeek, className }: MiniPlayerProps) {
             <button
               onClick={(e) => { e.stopPropagation(); setVolume(volume === 0 ? 0.7 : 0); }}
               className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={volume === 0 ? 'Unmute' : 'Mute'}
             >
               {volume === 0 ? (
                 <VolumeX className="w-5 h-5" />

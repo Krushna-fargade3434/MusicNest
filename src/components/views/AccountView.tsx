@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, LogOut, Plus, Music, Calendar, Crown, ChevronRight } from 'lucide-react';
+import { User, Mail, LogOut, Plus, Music, Calendar, ChevronRight } from 'lucide-react';
 import { useUserStore } from '@/stores/userStore';
 import { useTrackStore } from '@/stores/trackStore';
 import { createUser, getAllUsers } from '@/lib/database';
@@ -16,7 +16,6 @@ export function AccountView() {
   const { localTracks, clearTracks } = useTrackStore();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -29,16 +28,15 @@ export function AccountView() {
 
   const handleCreateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !email.trim() || !password.trim()) return;
+    if (!username.trim() || !email.trim()) return;
 
     setIsLoading(true);
     try {
-      const newUser = await createUser(username.trim(), email.trim(), password.trim());
+      const newUser = await createUser(username.trim(), email.trim());
       addUser(newUser);
       setCurrentUser(newUser);
       setUsername('');
       setEmail('');
-      setPassword('');
       toast({ title: 'Welcome!', description: `Account created for ${newUser.username}` });
     } catch (error) {
       toast({ title: 'Error', description: 'Failed to create account', variant: 'destructive' });
@@ -136,9 +134,9 @@ export function AccountView() {
               className="text-center py-16"
             >
               <div className="w-28 h-28 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-primary/30">
-                <Crown className="w-14 h-14 text-white" />
+                <img src="/MUSIC-NEST-LOGO.png" alt="Music Nest" className="w-20 h-20 object-cover rounded-full" />
               </div>
-              <h1 className="text-4xl font-black mb-4">PlayNest Premium</h1>
+              <h1 className="text-4xl font-black mb-4">MusicNest</h1>
               <p className="text-muted-foreground mb-8 max-w-md mx-auto">
                 Create an account to save your music library and access it anytime
               </p>
@@ -197,18 +195,11 @@ export function AccountView() {
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Password</label>
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    required
-                  />
-                </div>
+                <p className="text-xs text-muted-foreground">
+                  Note: This is a local-only app. Your data stays on your device.
+                </p>
                 <Button type="submit" disabled={isLoading} className="w-full bg-primary hover:bg-primary/90">
-                  {isLoading ? 'Creating...' : 'Sign Up Free'}
+                  {isLoading ? 'Creating...' : 'Create Profile'}
                 </Button>
               </form>
             </section>

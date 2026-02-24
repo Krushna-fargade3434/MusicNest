@@ -1,6 +1,6 @@
-import React from 'react';
-import { ChevronLeft, ChevronRight, Bell, User, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, User, Settings, WifiOff } from 'lucide-react';
 import { useUserStore } from '@/stores/userStore';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/lib/utils';
 
 interface HeaderProps {
@@ -11,6 +11,7 @@ interface HeaderProps {
 
 export function Header({ onNavigate, canGoBack = false, canGoForward = false }: HeaderProps) {
   const { currentUser } = useUserStore();
+  const isOnline = useOnlineStatus();
 
   return (
     <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-4 bg-gradient-to-b from-background/80 via-background/60 to-transparent backdrop-blur-md">
@@ -47,6 +48,17 @@ export function Header({ onNavigate, canGoBack = false, canGoForward = false }: 
 
       {/* Right Side Actions */}
       <div className="flex items-center gap-2">
+        {/* Offline Indicator */}
+        {!isOnline && (
+          <div 
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/30"
+            title="You're offline - Your saved music is still available"
+          >
+            <WifiOff className="w-3.5 h-3.5 text-amber-400" />
+            <span className="text-xs font-medium text-amber-400 hidden sm:inline">Offline</span>
+          </div>
+        )}
+        
         <button
           onClick={() => onNavigate('settings')}
           className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center hover:bg-black/80 hover:scale-105 transition-all"
