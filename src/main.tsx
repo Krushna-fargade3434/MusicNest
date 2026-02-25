@@ -5,29 +5,30 @@ import "./index.css";
 
 // Register Service Worker with enhanced offline support
 if ("serviceWorker" in navigator) {
-  const updateSW = registerSW({
-    immediate: true,
-    onNeedRefresh() {
-      // Show a toast or modal to user to refresh
-      const reload = confirm(
-        "New content available! Click OK to update the app."
-      );
-      if (reload) {
-        updateSW(true);
-      }
-    },
-    onOfflineReady() {
-      console.log("✅ App is ready to work offline!");
-      // Show a subtle notification that offline mode is available
-      const toast = document.createElement('div');
-      toast.textContent = '✅ App ready for offline use';
-      toast.style.cssText = `
-        position: fixed;
-        bottom: 100px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #10b981;
-        color: white;
+  try {
+    const updateSW = registerSW({
+      immediate: true,
+      onNeedRefresh() {
+        // Show a toast or modal to user to refresh
+        const reload = confirm(
+          "New content available! Click OK to update the app."
+        );
+        if (reload) {
+          updateSW(true);
+        }
+      },
+      onOfflineReady() {
+        console.log("✅ App is ready to work offline!");
+        // Show a subtle notification that offline mode is available
+        const toast = document.createElement('div');
+        toast.textContent = '✅ App ready for offline use';
+        toast.style.cssText = `
+          position: fixed;
+          bottom: 100px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: #10b981;
+          color: white;
         padding: 12px 24px;
         border-radius: 8px;
         font-size: 14px;
@@ -52,10 +53,13 @@ if ("serviceWorker" in navigator) {
         }, 60 * 60 * 1000);
       }
     },
-    onRegisterError(error: any) {
+    onRegisterError(error: unknown) {
       console.error("❌ SW registration error:", error);
     },
   });
+  } catch (error) {
+    console.error("❌ Failed to register service worker:", error);
+  }
 }
 
 // Add online/offline event listeners
@@ -111,4 +115,29 @@ window.addEventListener('offline', () => {
   }, 3000);
 });
 
-createRoot(document.getElementById("root")!).render(<App />);
+// Mount the React app
+try {
+  const rootElement = document.getElementById("root");
+  if (!rootElement) {
+    throw new Error("Root element not found");
+  }
+  console.log("🚀 Mounting React app...");
+  createRoot(rootElement).render(<App />);
+  console.log("✅ React app mounted successfully");
+} catch (error) {
+  console.error("❌ Failed to mount React app:", error);
+  // Show error to user
+  const errorDiv = document.createElement('div');
+  errorDiv.innerHTML = `
+    <div style="position: fixed; inset: 0; background: #09090b; color: white; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 16px; padding: 24px; text-align: center; font-family: system-ui;">
+      <h1 style="font-size: 24px; font-weight: bold; color: #ef4444;">Failed to Load MusicNest</h1>
+      <p style="color: #a1a1aa; max-width: 400px;">There was an error loading the application. Please try refreshing the page.</p>
+      <button onclick="location.reload()" style="padding: 12px 24px; background: #a855f7; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600;">Reload Page</button>
+      <details style="margin-top: 16px; color: #71717a; font-size: 12px; max-width: 500px; text-align: left;">
+        <summary style="cursor: pointer; font-weight: 600; margin-bottom: 8px;">Error Details</summary>
+        <pre style="background: #18181b; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 11px;">${error}</pre>
+      </details>
+    </div>
+  `;
+  document.body.appendChild(errorDiv);
+}

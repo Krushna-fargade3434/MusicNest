@@ -112,15 +112,40 @@
     
     <!-- Hide splash screen after app loads -->
     <script>
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          const splash = document.getElementById('splash-screen');
-          if (splash) {
-            splash.classList.add('hidden');
-            setTimeout(() => splash.remove(), 300);
-          }
-        }, 500);
+      // Multiple strategies to ensure splash screen hides
+      let splashHidden = false;
+      
+      function hideSplash() {
+        if (splashHidden) return;
+        splashHidden = true;
+        const splash = document.getElementById('splash-screen');
+        if (splash) {
+          splash.classList.add('hidden');
+          setTimeout(() => splash.remove(), 300);
+        }
+      }
+      
+      // Strategy 1: DOMContentLoaded (fastest)
+      document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(hideSplash, 300);
       });
+      
+      // Strategy 2: window.load (backup)
+      window.addEventListener('load', function() {
+        setTimeout(hideSplash, 500);
+      });
+      
+      // Strategy 3: Check for React root rendering (most reliable)
+      const checkInterval = setInterval(function() {
+        const root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          clearInterval(checkInterval);
+          setTimeout(hideSplash, 100);
+        }
+      }, 100);
+      
+      // Strategy 4: Failsafe - always hide after 3 seconds
+      setTimeout(hideSplash, 3000);
     </script>
   </body>
 </html>

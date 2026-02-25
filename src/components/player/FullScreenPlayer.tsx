@@ -123,21 +123,21 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
 
           <div className="relative h-full flex flex-col">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 pt-safe">
+            <div className="flex items-center justify-between p-3 sm:p-4 pt-safe">
               <button
                 onClick={onClose}
-                className="p-2 -ml-2 rounded-full hover:bg-white/10 transition-colors"
+                className="p-2 -ml-2 rounded-full hover:bg-white/10 active:bg-white/20 transition-colors touch-manipulation"
               >
-                <ChevronDown className="w-7 h-7" />
+                <ChevronDown className="w-6 h-6 sm:w-7 sm:h-7" />
               </button>
               <div className="text-center">
-                <p className="text-xs text-muted-foreground uppercase tracking-wider">Playing from</p>
-                <p className="text-sm font-medium">Your Library</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wider">Playing from</p>
+                <p className="text-xs sm:text-sm font-medium">Your Library</p>
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="p-2 -mr-2 rounded-full hover:bg-white/10 transition-colors">
-                    <MoreHorizontal className="w-6 h-6" />
+                  <button className="p-2 -mr-2 rounded-full hover:bg-white/10 active:bg-white/20 transition-colors touch-manipulation">
+                    <MoreHorizontal className="w-5 h-5 sm:w-6 sm:h-6" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56 bg-[#1a1a2e] border-white/10 text-white" align="end">
@@ -206,7 +206,7 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
 
             {/* Album Art */}
             <div className="flex-1 flex items-center justify-center px-4 sm:px-8 py-2 sm:py-4">
-              <div className="relative w-full max-w-[280px] sm:max-w-[320px] md:max-w-[340px] aspect-square shadow-2xl rounded-xl overflow-hidden">
+              <div className="relative w-full max-w-[260px] sm:max-w-[300px] md:max-w-[340px] aspect-square shadow-2xl rounded-lg overflow-hidden">
                 {currentTrack?.coverUrl ? (
                   <img
                     src={currentTrack.coverUrl}
@@ -215,34 +215,34 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
                   />
                 ) : (
                   <div className="w-full h-full bg-zinc-900 flex items-center justify-center border border-white/10">
-                    <Music className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-muted-foreground/30" />
+                    <Music className="w-14 h-14 sm:w-18 sm:h-18 md:w-24 md:h-24 text-muted-foreground/30" />
                   </div>
                 )}
               </div>
             </div>
 
             {/* Track Info & Controls */}
-            <div className="px-4 sm:px-8 pb-6 sm:pb-8 pt-2 sm:pt-4">
+            <div className="px-4 sm:px-6 md:px-8 pb-safe pb-6 sm:pb-8 pt-2">
               {/* Track Info */}
-              <div className="flex items-start justify-between mb-4 sm:mb-6">
+              <div className="flex items-start justify-between mb-3 sm:mb-5">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-xl sm:text-2xl font-bold truncate mb-1">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-bold truncate mb-0.5 sm:mb-1">
                     {currentTrack?.title || 'No track selected'}
                   </h2>
                 </div>
                 <button 
                   onClick={() => setIsLiked(!isLiked)}
-                  className="p-1 sm:p-2 shrink-0"
+                  className="p-1.5 sm:p-2 shrink-0 touch-manipulation active:scale-95 transition-transform"
                 >
                   <Heart className={cn(
-                    'w-6 h-6 sm:w-7 sm:h-7 transition-colors',
+                    'w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 transition-colors',
                     isLiked ? 'text-primary fill-primary' : 'text-muted-foreground'
                   )} />
                 </button>
               </div>
 
               {/* Progress Bar */}
-              <div className="mb-4 sm:mb-6">
+              <div className="mb-4 sm:mb-5 md:mb-6">
                 <Slider
                   value={[localTime]}
                   max={duration || 100}
@@ -252,59 +252,59 @@ export function FullScreenPlayer({ isOpen, onClose, onSeek }: FullScreenPlayerPr
                   onPointerDown={handleSeekStart}
                   className="cursor-pointer"
                 />
-                <div className="flex justify-between mt-2 text-xs sm:text-sm text-muted-foreground">
+                <div className="flex justify-between mt-1.5 sm:mt-2 text-[10px] sm:text-xs md:text-sm text-muted-foreground">
                   <span>{formatTime(localTime)}</span>
                   <span>{formatTime(duration)}</span>
                 </div>
               </div>
 
               {/* Main Controls */}
-              <div className="flex items-center justify-between mb-6 sm:mb-8">
+              <div className="flex items-center justify-between mb-5 sm:mb-7 md:mb-8">
                 <button
                   onClick={toggleShuffle}
                   className={cn(
-                    'p-2 sm:p-3',
+                    'p-2 sm:p-2.5 touch-manipulation active:scale-95 transition-transform',
                     shuffle ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
-                  <Shuffle className="w-5 h-5 sm:w-6 sm:h-6" />
+                  <Shuffle className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                 </button>
-                <button onClick={previous} className="p-2 sm:p-3">
-                  <SkipBack className="w-7 h-7 sm:w-9 sm:h-9 fill-current" />
+                <button onClick={previous} className="p-2 sm:p-2.5 touch-manipulation active:scale-95 transition-transform">
+                  <SkipBack className="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9 fill-current" />
                 </button>
                 <button
                   onClick={togglePlay}
-                  className="w-16 h-16 sm:w-18 sm:h-18 rounded-full bg-foreground text-background flex items-center justify-center hover:scale-105 transition-transform p-4 sm:p-5"
+                  className="w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 rounded-full bg-foreground text-background flex items-center justify-center active:scale-95 transition-transform shadow-2xl touch-manipulation"
                 >
                   {isPlaying ? (
-                    <Pause className="w-8 h-8 sm:w-10 sm:h-10 fill-current" />
+                    <Pause className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 fill-current" />
                   ) : (
-                    <Play className="w-8 h-8 sm:w-10 sm:h-10 fill-current ml-1" />
+                    <Play className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 fill-current ml-0.5" />
                   )}
                 </button>
-                <button onClick={next} className="p-2 sm:p-3">
-                  <SkipForward className="w-7 h-7 sm:w-9 sm:h-9 fill-current" />
+                <button onClick={next} className="p-2 sm:p-2.5 touch-manipulation active:scale-95 transition-transform">
+                  <SkipForward className="w-6 h-6 sm:w-7 sm:h-7 md:w-9 md:h-9 fill-current" />
                 </button>
                 <button
                   onClick={toggleRepeat}
                   className={cn(
-                    'p-2 sm:p-3',
+                    'p-2 sm:p-2.5 touch-manipulation active:scale-95 transition-transform',
                     repeat !== 'none' ? 'text-primary' : 'text-muted-foreground'
                   )}
                 >
                   {repeat === 'one' ? (
-                    <Repeat1 className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <Repeat1 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                   ) : (
-                    <Repeat className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <Repeat className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6" />
                   )}
                 </button>
               </div>
 
               {/* Volume */}
-              <div className="flex items-center gap-3 sm:gap-4">
+              <div className="flex items-center gap-2.5 sm:gap-3 md:gap-4">
                 <button
                   onClick={() => setVolume(volume === 0 ? 0.7 : 0)}
-                  className="text-muted-foreground"
+                  className="text-muted-foreground touch-manipulation active:scale-95 transition-transform"
                 >
                   {volume === 0 ? <VolumeX className="w-4 h-4 sm:w-5 sm:h-5" /> : <Volume2 className="w-4 h-4 sm:w-5 sm:h-5" />}
                 </button>

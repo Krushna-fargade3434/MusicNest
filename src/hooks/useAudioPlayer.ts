@@ -2,6 +2,8 @@ import { useRef, useEffect, useCallback } from 'react';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useSettingsStore } from '@/stores/settingsStore';
 import { SEEK_RESTART_THRESHOLD } from '@/constants';
+import { isSampleTrack } from '@/data/sampleSongs';
+import { toast } from '@/hooks/use-toast';
 
 export function useAudioPlayer() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -71,6 +73,20 @@ export function useAudioPlayer() {
       return;
     }
 
+    // Check if this is a sample track
+    if (currentTrack.id && isSampleTrack(currentTrack.id)) {
+      toast({
+        title: "Demo Track",
+        description: "This is a sample track for demo purposes. Import your own music files to play real audio.",
+        variant: "default",
+      });
+      // Don't try to play sample tracks
+      if (audio) audio.src = '';
+      if (video) video.src = '';
+      pause();
+      return;
+    }
+
     const element = currentTrack.isVideo ? video : audio;
     const otherElement = currentTrack.isVideo ? audio : video;
     
@@ -93,7 +109,7 @@ export function useAudioPlayer() {
         });
       }
     }
-  }, [currentTrack?.id, currentTrack?.blobUrl, currentTrack?.isVideo]);
+  }, [currentTrack?.id, currentTrack?.blobUrl, currentTrack?.isVideo, pause]);
 
   // Handle play/pause
   useEffect(() => {

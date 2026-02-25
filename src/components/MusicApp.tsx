@@ -8,10 +8,12 @@ import { FullScreenPlayer } from '@/components/player/FullScreenPlayer';
 import { usePlayerStore } from '@/stores/playerStore';
 import { useUserStore } from '@/stores/userStore';
 import { useSettingsStore } from '@/stores/settingsStore';
+import { useTrackStore } from '@/stores/trackStore';
 import { useLocalMusic } from '@/hooks/useLocalMusic';
 import { useAudioPlayer } from '@/hooks/useAudioPlayer';
 import { cn } from '@/lib/utils';
 import { ACCENT_COLORS } from '@/constants';
+import { getSampleSongs } from '@/data/sampleSongs';
 
 // Lazy load views for better performance
 const HomeView = lazy(() => import('@/components/views/HomeView').then(m => ({ default: m.HomeView })));
@@ -36,6 +38,7 @@ export function MusicApp() {
   const { currentTrack } = usePlayerStore();
   const { currentUser } = useUserStore();
   const { theme, accentColor } = useSettingsStore();
+  const { localTracks, addTracks } = useTrackStore();
   const { loadTracksFromDB } = useLocalMusic();
   const { seek } = useAudioPlayer();
 
@@ -67,6 +70,21 @@ export function MusicApp() {
       loadTracksFromDB();
     }
   }, [currentUser, loadTracksFromDB]);
+
+  // Load sample songs when user has no tracks (first time experience)
+  useEffect(() => {
+    if (currentUser && localTracks.length === 0) {
+      const timeoutId = setTimeout(() => {
+        if (localTracks.length === 0) {
+          const sampleTracks = getSampleSongs(currentUser.id!);
+          addTracks(sampleTracks);
+          console.log('✨ Loaded sample songs for demo');
+        }
+      }, 1000); // Wait 1 second after user login to check if they have tracks
+      
+      return () => clearTimeout(timeoutId);
+    }
+  }, [currentUser, localTracks.length, addTracks]);
 
   // Redirect to account if not logged in
   useEffect(() => {
@@ -102,7 +120,7 @@ export function MusicApp() {
         className={cn(
           'min-h-screen transition-all duration-300',
           'md:ml-[280px]',
-          currentTrack ? 'pb-40 md:pb-24' : 'pb-20 md:pb-0'
+          currentTrack ? 'pb-[140px] md:pb-24' : 'pb-20 md:pb-0'
         )}
       >
         {/* Header */}
@@ -122,7 +140,7 @@ export function MusicApp() {
           <MiniPlayer 
             onClick={() => setIsFullScreenOpen(true)} 
             onSeek={seek}
-            className="bottom-[80px] md:bottom-0"
+            className="bottom-[68px] md:bottom-0"
           />
         )}
       </AnimatePresence>
